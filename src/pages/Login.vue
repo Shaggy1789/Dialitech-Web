@@ -12,16 +12,19 @@
       </div>
       <h1 class="login-title">Welcome back</h1>
       <p class="login-subtitle">Sign in to your account to continue</p>
-      <form class="login-form">
+      <form class="login-form" @submit.prevent="handleLogin">
         <div class="field">
           <label class="field-label">Email</label>
-          <input type="email" class="field-input" placeholder="you@example.com" readonly />
+          <input v-model="email" type="email" class="field-input" placeholder="you@example.com" required />
         </div>
         <div class="field">
           <label class="field-label">Password</label>
-          <input type="password" class="field-input" placeholder="••••••••" readonly />
+          <input v-model="password" type="password" class="field-input" placeholder="••••••••" required />
         </div>
-        <button type="submit" class="login-btn">Sign In</button>
+        <p v-if="authStore.error" class="error-msg">{{ authStore.error }}</p>
+        <button type="submit" class="login-btn" :disabled="authStore.loading">
+          {{ authStore.loading ? 'Signing in...' : 'Sign In' }}
+        </button>
       </form>
       <p class="login-footer">
         Don&apos;t have an account?
@@ -36,6 +39,27 @@
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/authStore';
+
+const router = useRouter();
+const authStore = useAuthStore();
+
+const email = ref('');
+const password = ref('');
+
+async function handleLogin() {
+  try {
+    await authStore.login(email.value, password.value);
+    router.push('/dashboard');
+  } catch {
+    /* error is stored in authStore.error */
+  }
+}
+</script>
 
 <style scoped>
 .login-page {
@@ -121,6 +145,12 @@
   background: #ffffff;
 }
 
+.error-msg {
+  color: #ef4444;
+  font-size: 13px;
+  margin: 0;
+}
+
 .login-btn {
   padding: 12px;
   background: #2563eb;
@@ -136,6 +166,11 @@
 
 .login-btn:hover {
   background: #1d4ed8;
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .login-footer {

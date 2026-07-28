@@ -47,12 +47,16 @@
         />
 
         <template v-if="currentStep === 2">
-          <CaregiverRegisterForm v-if="selectedType === 'caregiver'" />
-          <PatientRegisterForm v-if="selectedType === 'patient'" />
+          <CaregiverRegisterForm ref="caregiverForm" v-if="selectedType === 'caregiver'" />
+          <PatientRegisterForm ref="patientForm" v-if="selectedType === 'patient'" />
 
           <TermsCheckbox />
 
-          <button class="register-btn">Create Account</button>
+          <p v-if="authStore.error" class="error-msg">{{ authStore.error }}</p>
+
+          <button class="register-btn" :disabled="authStore.loading" @click="submitRegistration">
+            {{ authStore.loading ? 'Creating account...' : 'Create Account' }}
+          </button>
 
           <button class="back-btn" @click="goBack">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -68,6 +72,8 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../../stores/authStore';
 import RegisterCard from '../components/RegisterCard.vue';
 import StepIndicator from '../components/StepIndicator.vue';
 import UserTypeSelection from '../components/UserTypeSelection.vue';
@@ -75,8 +81,13 @@ import CaregiverRegisterForm from '../components/CaregiverRegisterForm.vue';
 import PatientRegisterForm from '../components/PatientRegisterForm.vue';
 import TermsCheckbox from '../components/TermsCheckbox.vue';
 
+const router = useRouter();
+const authStore = useAuthStore();
+
 const currentStep = ref(1);
 const selectedType = ref(null);
+const caregiverForm = ref(null);
+const patientForm = ref(null);
 
 function onTypeSelected(type) {
   selectedType.value = type;
@@ -86,6 +97,19 @@ function onTypeSelected(type) {
 function goBack() {
   currentStep.value = 1;
   selectedType.value = null;
+}
+
+async function submitRegistration() {
+  const form = selectedType.value === 'caregiver' ? caregiverForm.value : patientForm.value;
+  if (!form) return;
+
+  const payload = form.getPayload();
+  try {
+    await authStore.register(payload);
+    router.push('/login');
+  } catch {
+    /* error is stored in authStore.error */
+  }
 }
 </script>
 
@@ -178,6 +202,13 @@ function goBack() {
   overflow-y: auto;
 }
 
+.error-msg {
+  color: #ef4444;
+  font-size: 13px;
+  text-align: center;
+  margin: 8px 0 0;
+}
+
 .register-btn {
   width: 100%;
   padding: 12px;
@@ -194,6 +225,11 @@ function goBack() {
 
 .register-btn:hover {
   background: #1d4ed8;
+}
+
+.register-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .back-btn {

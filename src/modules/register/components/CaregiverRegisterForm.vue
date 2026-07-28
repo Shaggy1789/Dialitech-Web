@@ -7,27 +7,27 @@
     <div class="fields-grid">
       <div class="field">
         <label class="field-label">First Name</label>
-        <input class="field-input" placeholder="John" readonly />
+        <input v-model="form.firstName" class="field-input" placeholder="John" />
       </div>
       <div class="field">
         <label class="field-label">Last Name</label>
-        <input class="field-input" placeholder="Doe" readonly />
+        <input v-model="form.lastName" class="field-input" placeholder="Doe" />
       </div>
       <div class="field">
         <label class="field-label">Email</label>
-        <input class="field-input" type="email" placeholder="you@example.com" readonly />
+        <input v-model="form.email" type="email" class="field-input" placeholder="you@example.com" />
       </div>
       <div class="field">
         <label class="field-label">Phone</label>
-        <input class="field-input" type="tel" placeholder="+1 (555) 000-0000" readonly />
+        <input v-model="form.phone" type="tel" class="field-input" placeholder="+1 (555) 000-0000" />
       </div>
       <div class="field">
         <label class="field-label">Username</label>
-        <input class="field-input" placeholder="johndoe" readonly />
+        <input v-model="form.username" class="field-input" placeholder="johndoe" />
       </div>
       <div class="field">
         <label class="field-label">Gender</label>
-        <select class="field-select">
+        <select v-model="form.gender" class="field-select">
           <option value="" disabled selected>Select</option>
           <option>Male</option>
           <option>Female</option>
@@ -37,13 +37,13 @@
       </div>
       <div class="field">
         <label class="field-label">Date of Birth</label>
-        <input class="field-input" type="date" readonly />
+        <input v-model="form.dob" class="field-input" type="date" />
       </div>
       <div class="field" />
       <div class="field">
         <label class="field-label">Password</label>
         <div class="input-wrapper">
-          <input class="field-input" type="password" placeholder="••••••••" readonly />
+          <input v-model="form.password" class="field-input" type="password" placeholder="••••••••" />
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M12 5C7 5 2.73 8.11 1 12C2.73 15.89 7 19 12 19C17 19 21.27 15.89 23 12C21.27 8.11 17 5 12 5Z" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" />
             <circle cx="12" cy="12" r="3" stroke="#9ca3af" stroke-width="1.5" />
@@ -53,7 +53,7 @@
       <div class="field">
         <label class="field-label">Confirm Password</label>
         <div class="input-wrapper">
-          <input class="field-input" type="password" placeholder="••••••••" readonly />
+          <input v-model="form.confirmPassword" class="field-input" type="password" placeholder="••••••••" />
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M12 5C7 5 2.73 8.11 1 12C2.73 15.89 7 19 12 19C17 19 21.27 15.89 23 12C21.27 8.11 17 5 12 5Z" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" />
             <circle cx="12" cy="12" r="3" stroke="#9ca3af" stroke-width="1.5" />
@@ -65,7 +65,31 @@
 </template>
 
 <script setup>
+import { reactive } from 'vue';
 import RegisterAvatarUploader from './RegisterAvatarUploader.vue';
+
+const form = reactive({
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  username: '',
+  gender: '',
+  dob: '',
+  password: '',
+  confirmPassword: '',
+});
+
+function getPayload() {
+  return {
+    name: `${form.firstName} ${form.lastName}`.trim(),
+    email: form.email,
+    password: form.password,
+    age: form.dob ? new Date().getFullYear() - new Date(form.dob).getFullYear() : 0,
+  };
+}
+
+defineExpose({ form, getPayload });
 </script>
 
 <style scoped>
@@ -109,7 +133,6 @@ import RegisterAvatarUploader from './RegisterAvatarUploader.vue';
   background: #f9fafb;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
-  cursor: default;
   box-sizing: border-box;
 }
 

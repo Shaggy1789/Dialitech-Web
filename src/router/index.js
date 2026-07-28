@@ -26,6 +26,7 @@ const routes = [
   {
     path: '/dashboard',
     component: DashboardLayout,
+    meta: { requiresAuth: true },
     children: [
       { path: '', name: 'dashboard', component: DashboardView },
     ],
@@ -33,6 +34,7 @@ const routes = [
   {
     path: '/patients',
     component: DashboardLayout,
+    meta: { requiresAuth: true },
     children: [
       { path: '', name: 'patients', component: PatientsView },
       { path: ':id', name: 'patient-detail', component: PatientDetailView },
@@ -41,6 +43,7 @@ const routes = [
   {
     path: '/users',
     component: DashboardLayout,
+    meta: { requiresAuth: true },
     children: [
       { path: '', name: 'user-management', component: UserManagementView },
     ],
@@ -48,6 +51,7 @@ const routes = [
   {
     path: '/alerts',
     component: DashboardLayout,
+    meta: { requiresAuth: true },
     children: [
       { path: '', name: 'alerts', component: AlertsView },
     ],
@@ -55,14 +59,26 @@ const routes = [
   {
     path: '/settings',
     component: DashboardLayout,
+    meta: { requiresAuth: true },
     children: [
       { path: '', name: 'settings', component: SettingsView },
     ],
   },
 ];
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes,
   linkActiveClass: 'active',
 });
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token');
+  if (to.meta.requiresAuth && !token) {
+    next({ name: 'login' });
+  } else {
+    next();
+  }
+});
+
+export default router;

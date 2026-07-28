@@ -4,12 +4,12 @@
 
     <UsersToolbar />
 
-    <UsersTable :users="users" />
+    <UsersTable :users="userStore.users" />
 
     <div class="pagination-wrapper">
       <div class="pagination">
         <div class="pagination-info">
-          Showing 1 to {{ users.length }} of {{ users.length }} users
+          Showing 1 to {{ userStore.users.length }} of {{ userStore.users.length }} users
         </div>
         <div class="pagination-controls">
           <button class="page-btn nav-btn" disabled>
@@ -32,10 +32,17 @@
 </template>
 
 <script setup>
-import { users } from '../data/users.js';
+import { onMounted } from 'vue';
+import { useUserStore } from '../../../stores/userStore';
 import UsersHeader from '../components/UsersHeader.vue';
 import UsersToolbar from '../components/UsersToolbar.vue';
 import UsersTable from '../components/UsersTable.vue';
+
+const userStore = useUserStore();
+
+onMounted(() => {
+  userStore.fetchAll();
+});
 </script>
 
 <style scoped>

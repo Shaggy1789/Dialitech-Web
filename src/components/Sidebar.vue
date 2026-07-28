@@ -55,14 +55,31 @@
       </router-link>
     </nav>
     <div class="user-card">
-      <div class="avatar">SW</div>
+      <div class="avatar">{{ initials }}</div>
       <div class="user-details">
-        <p class="user-name">Dr. Sarah Wilson</p>
+        <p class="user-name">{{ authStore.userName || 'Dr. Sarah Wilson' }}</p>
         <p class="user-role">Nephrologist</p>
       </div>
     </div>
   </aside>
 </template>
+
+<script setup>
+import { computed } from 'vue';
+import { useAuthStore } from '../stores/authStore';
+
+const authStore = useAuthStore();
+
+const initials = computed(() => {
+  const name = authStore.userName || 'Dr. Sarah Wilson';
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+});
+</script>
 
 <style scoped>
 .sidebar {
