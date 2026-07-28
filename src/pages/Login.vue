@@ -21,6 +21,7 @@
           <label class="field-label">Password</label>
           <input v-model="password" type="password" class="field-input" placeholder="••••••••" required />
         </div>
+        <router-link to="/forgot-password" class="forgot-link">Forgot your password?</router-link>
         <p v-if="authStore.error" class="error-msg">{{ authStore.error }}</p>
         <button type="submit" class="login-btn" :disabled="authStore.loading">
           {{ authStore.loading ? 'Signing in...' : 'Sign In' }}
@@ -143,6 +144,21 @@ async function handleLogin() {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   background: #ffffff;
+}
+
+.forgot-link {
+  align-self: flex-end;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+  transition: color 0.15s;
+  margin-top: -8px;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+  color: #1d4ed8;
 }
 
 .error-msg {
