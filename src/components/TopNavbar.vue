@@ -12,6 +12,8 @@
       />
     </div>
     <div class="right-section">
+      <PlanBadge :plan="sub.planId" />
+
       <button class="notification-btn">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path d="M10 2a6 6 0 0 0-6 6v4l-2 2v1h16v-1l-2-2V8a6 6 0 0 0-6-6Z" stroke="#6b7280" stroke-width="1.5" />
@@ -20,10 +22,10 @@
         </svg>
       </button>
       <div class="user-menu">
-        <div class="avatar">SW</div>
+        <div class="avatar">{{ initials }}</div>
         <div class="user-info">
-          <span class="user-name">Dr. Sarah Wilson</span>
-          <span class="user-role">Nephrologist</span>
+          <span class="user-name">{{ authStore.userName || 'Dr. Sarah Wilson' }}</span>
+          <span class="user-role">{{ userRoleLabel }}</span>
         </div>
       </div>
     </div>
@@ -31,6 +33,28 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useAuthStore } from '../stores/authStore';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
+import PlanBadge from './PlanBadge.vue';
+
+const authStore = useAuthStore();
+const sub = useSubscriptionStore();
+
+const initials = computed(() => {
+  const name = authStore.userName || 'Dr. Sarah Wilson';
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+});
+
+const userRoleLabel = computed(() => {
+  const labels = { patient: 'Patient', caregiver: 'Caregiver', admin: 'Administrator' };
+  return labels[sub.role] || 'Nephrologist';
+});
 </script>
 
 <style scoped>

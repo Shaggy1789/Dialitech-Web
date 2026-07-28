@@ -1,42 +1,72 @@
 <template>
-  <div class="dashboard-view">
+  <PatientDashboardView v-if="sub.role === 'patient'" />
+
+  <div v-else class="dashboard-view">
+    <SubscriptionBanner
+      :plan="sub.planId"
+      @upgrade="showModal = true"
+    />
+
     <header class="page-header">
       <h1 class="page-title">Clinical Dashboard</h1>
       <p class="page-subtitle">Real-time monitoring overview</p>
     </header>
+
     <div class="kpi-grid">
-      <StatsCard
-        title="Patients Monitored"
-        value="24 / 30"
-        variant="blue"
-      />
-      <StatsCard
-        title="Critical Alerts"
-        value="2 Critical"
-        variant="red"
-      />
-      <StatsCard
-        title="Patients Online"
-        value="100%"
-        variant="green"
-      />
-      <StatsCard
-        title="System Status"
-        value="Stable"
-        variant="blue"
-      />
+      <PermissionWrapper feature="dashboard" @open-modal="showModal = true">
+        <StatsCard title="Patients Monitored" value="24 / 30" variant="blue" />
+      </PermissionWrapper>
+
+      <PermissionWrapper feature="alerts" @open-modal="showModal = true">
+        <StatsCard title="Critical Alerts" value="2 Critical" variant="red" />
+      </PermissionWrapper>
+
+      <PermissionWrapper feature="dashboard" @open-modal="showModal = true">
+        <StatsCard title="Patients Online" value="100%" variant="green" />
+      </PermissionWrapper>
+
+      <PermissionWrapper feature="statistics" @open-modal="showModal = true">
+        <StatsCard title="System Status" value="Stable" variant="blue" />
+      </PermissionWrapper>
     </div>
+
     <div class="dashboard-grid">
-      <CriticalAlertsPanel />
-      <PatientMonitoringPanel />
+      <PermissionWrapper feature="alerts" @open-modal="showModal = true">
+        <CriticalAlertsPanel />
+      </PermissionWrapper>
+
+      <PermissionWrapper feature="patients" @open-modal="showModal = true">
+        <PatientMonitoringPanel />
+      </PermissionWrapper>
     </div>
+
+    <UpgradePlanModal
+      :visible="showModal"
+      :current-plan="sub.planId"
+      @close="showModal = false"
+      @select="onSelectPlan"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
 import StatsCard from '../components/StatsCard.vue';
 import CriticalAlertsPanel from '../components/CriticalAlertsPanel.vue';
 import PatientMonitoringPanel from '../components/PatientMonitoringPanel.vue';
+import PatientDashboardView from '../components/PatientDashboardView.vue';
+import SubscriptionBanner from '../components/SubscriptionBanner.vue';
+import PermissionWrapper from '../components/PermissionWrapper.vue';
+import UpgradePlanModal from '../components/UpgradePlanModal.vue';
+
+const sub = useSubscriptionStore();
+const showModal = ref(false);
+
+function onSelectPlan(planId) {
+  sub.setPlan(planId);
+  showModal.value = false;
+}
 </script>
 
 <style scoped>

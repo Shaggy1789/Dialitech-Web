@@ -14,6 +14,8 @@ import PatientDetailView from '../modules/patients/views/PatientDetailView.vue';
 import UserManagementView from '../modules/user-management/views/UserManagementView.vue';
 import AlertsView from '../modules/alerts/views/AlertsView.vue';
 import SettingsView from '../modules/settings/views/SettingsView.vue';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
+import { canAccessRoute } from '../config/permissions';
 
 const routes = [
   {
@@ -40,7 +42,7 @@ const routes = [
   {
     path: '/patients',
     component: DashboardLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, module: 'patients' },
     children: [
       { path: '', name: 'patients', component: PatientsView },
       { path: ':id', name: 'patient-detail', component: PatientDetailView },
@@ -49,7 +51,7 @@ const routes = [
   {
     path: '/users',
     component: DashboardLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, module: 'administration' },
     children: [
       { path: '', name: 'user-management', component: UserManagementView },
     ],
@@ -57,7 +59,7 @@ const routes = [
   {
     path: '/alerts',
     component: DashboardLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, module: 'alerts' },
     children: [
       { path: '', name: 'alerts', component: AlertsView },
     ],
@@ -65,7 +67,7 @@ const routes = [
   {
     path: '/settings',
     component: DashboardLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, module: 'settings' },
     children: [
       { path: '', name: 'settings', component: SettingsView },
     ],
@@ -80,11 +82,20 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
+
   if (to.meta.requiresAuth && !token) {
     next({ name: 'login' });
-  } else {
-    next();
+    return;
   }
+
+  const sub = useSubscriptionStore();
+  const routeModule = to.meta.module;
+  if (to.meta.requiresAuth && routeModule && !sub.can(routeModule)) {
+    next({ name: 'dashboard' });
+    return;
+  }
+
+  next();
 });
 
 export default router;

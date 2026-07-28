@@ -9,66 +9,88 @@
           <circle cx="16" cy="16" r="3" fill="#fff" />
         </svg>
       </div>
-      <span class="brand-name">DiaMonitor</span>
+      <div class="brand-info">
+        <span class="brand-name">DiaMonitor</span>
+        <PlanBadge :plan="sub.planId" />
+      </div>
     </div>
     <nav class="menu">
-      <router-link to="/dashboard" class="menu-item">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor" />
-          <rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.4" />
-          <rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.4" />
-          <rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.4" />
-        </svg>
-        Dashboard
-      </router-link>
-      <router-link to="/patients" class="menu-item">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="7" cy="6" r="3" stroke="currentColor" stroke-width="1.5" />
-          <path d="M1 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          <path d="M13 7h6M16 4v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-        </svg>
-        Patients
-      </router-link>
-      <router-link to="/alerts" class="menu-item">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path d="M10 2a6 6 0 0 0-6 6v4l-2 2v1h16v-1l-2-2V8a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.5" />
-          <circle cx="13.5" cy="4" r="3.5" fill="#ef4444" stroke="#fff" stroke-width="1.5" />
-          <path d="M8 17a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.5" />
-        </svg>
-        Alerts
-      </router-link>
-      <router-link to="/users" class="menu-item">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="7" cy="6" r="2.5" stroke="currentColor" stroke-width="1.5" />
-          <circle cx="14" cy="6" r="2.5" stroke="currentColor" stroke-width="1.5" />
-          <path d="M1 16c0-2.5 2-4.5 4.5-4.5h3c2.5 0 4.5 2 4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          <path d="M14 11.5c2.5 0 4.5 2 4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-        </svg>
-        User Management
-      </router-link>
-      <router-link to="/settings" class="menu-item">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
-          <path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L-1.34 9.66M4.34 4.34L9.66 9.66" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-        </svg>
-        Settings
-      </router-link>
+      <template v-for="item in visibleModules" :key="item.key">
+        <div
+          v-if="item.locked"
+          class="menu-item locked"
+          @click="onLockedClick"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="4" y="8" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.5" />
+            <path d="M7 8V6C7 4 8.5 3 10 3C11.5 3 13 4 13 6V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <circle cx="10" cy="12" r="1" fill="currentColor" />
+            <path d="M10 12V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          {{ item.label }}
+        </div>
+        <router-link v-else :to="item.route" class="menu-item">
+          <svg v-if="item.icon === 'dashboard'" width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor" />
+            <rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.4" />
+            <rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.4" />
+            <rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.4" />
+          </svg>
+          <svg v-else-if="item.icon === 'patients'" width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="7" cy="6" r="3" stroke="currentColor" stroke-width="1.5" />
+            <path d="M1 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M13 7h6M16 4v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <svg v-else-if="item.icon === 'alerts'" width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2a6 6 0 0 0-6 6v4l-2 2v1h16v-1l-2-2V8a6 6 0 0 0-6-6Z" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="13.5" cy="4" r="3.5" fill="#ef4444" stroke="#fff" stroke-width="1.5" />
+            <path d="M8 17a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          <svg v-else-if="item.icon === 'users'" width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="7" cy="6" r="2.5" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="14" cy="6" r="2.5" stroke="currentColor" stroke-width="1.5" />
+            <path d="M1 16c0-2.5 2-4.5 4.5-4.5h3c2.5 0 4.5 2 4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M14 11.5c2.5 0 4.5 2 4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <svg v-else width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L-1.34 9.66M4.34 4.34L9.66 9.66" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          {{ item.label }}
+        </router-link>
+      </template>
     </nav>
     <div class="user-card">
       <div class="avatar">{{ initials }}</div>
       <div class="user-details">
         <p class="user-name">{{ authStore.userName || 'Dr. Sarah Wilson' }}</p>
-        <p class="user-role">Nephrologist</p>
+        <p class="user-role">{{ userRoleLabel }}</p>
       </div>
     </div>
   </aside>
+
+  <UpgradePlanModal
+    :visible="showUpgradeModal"
+    :current-plan="sub.planId"
+    @close="showUpgradeModal = false"
+    @select="onSelectPlan"
+  />
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useAuthStore } from '../stores/authStore';
+import { useSubscriptionStore } from '../stores/subscriptionStore';
+import PlanBadge from './PlanBadge.vue';
+import UpgradePlanModal from './UpgradePlanModal.vue';
 
 const authStore = useAuthStore();
+const sub = useSubscriptionStore();
+const showUpgradeModal = ref(false);
+
+const visibleModules = computed(() => {
+  return sub.sidebarModules.filter((m) => !m.hidden);
+});
 
 const initials = computed(() => {
   const name = authStore.userName || 'Dr. Sarah Wilson';
@@ -79,6 +101,20 @@ const initials = computed(() => {
     .toUpperCase()
     .slice(0, 2);
 });
+
+const userRoleLabel = computed(() => {
+  const labels = { patient: 'Patient', caregiver: 'Caregiver', admin: 'Administrator' };
+  return labels[sub.role] || 'Nephrologist';
+});
+
+function onLockedClick() {
+  showUpgradeModal.value = true;
+}
+
+function onSelectPlan(planId) {
+  sub.setPlan(planId);
+  showUpgradeModal.value = false;
+}
 </script>
 
 <style scoped>
@@ -98,7 +134,13 @@ const initials = computed(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 20px 20px 28px;
+  padding: 20px 20px 24px;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .brand-name {
@@ -126,6 +168,7 @@ const initials = computed(() => {
   font-size: 14px;
   font-weight: 500;
   transition: all 0.15s ease;
+  cursor: pointer;
 }
 
 .menu-item:hover {
@@ -137,6 +180,16 @@ const initials = computed(() => {
   background: #eff6ff;
   color: #2563eb;
   font-weight: 600;
+}
+
+.menu-item.locked {
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.menu-item.locked:hover {
+  opacity: 0.7;
+  background: #f3f4f6;
 }
 
 .user-card {

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authService } from '../services/authService';
+import { useSubscriptionStore } from './subscriptionStore';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('user') || 'null'));
@@ -13,6 +14,14 @@ export const useAuthStore = defineStore('auth', () => {
   const userEmail = computed(() => user.value?.email || '');
   const userId = computed(() => user.value?.id || '');
 
+  function initSubscription() {
+    const sub = useSubscriptionStore();
+    if (user.value?.plan) sub.setPlan(user.value.plan);
+    if (user.value?.role) sub.setRole(user.value.role);
+  }
+
+  initSubscription();
+
   async function login(email, password) {
     loading.value = true;
     error.value = '';
@@ -22,6 +31,7 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = data.user;
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      initSubscription();
       return data;
     } catch (err) {
       error.value = err.response?.data?.message || 'Login failed';
@@ -51,6 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
       const { data } = await authService.me();
       user.value = data;
       localStorage.setItem('user', JSON.stringify(data));
+      initSubscription();
     } catch {
       logout();
     }
@@ -61,11 +72,14 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = '';
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    const sub = useSubscriptionStore();
+    sub.setPlan('free');
+    sub.setRole('admin');
   }
 
   return {
     user, token, loading, error,
     isAuthenticated, userName, userEmail, userId,
-    login, register, fetchMe, logout,
+    login, register, fetchMe, logout, initSubscription,
   };
 });
