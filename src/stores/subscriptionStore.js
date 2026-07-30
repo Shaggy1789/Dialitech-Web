@@ -2,16 +2,41 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { PLANS } from '../config/plans';
 import { hasFeature, isModuleLocked, isModuleAvailable } from '../config/permissions';
+import { subscriptionService } from '../services/settings/subscription.service';
 
 export const useSubscriptionStore = defineStore('subscription', () => {
   const planId = ref('free');
   const role = ref('caregiver');
+  const changing = ref(false);
 
   const currentPlan = computed(() => PLANS[planId.value] || PLANS.free);
   const isFree = computed(() => planId.value === 'free');
   const isPaid = computed(() => !isFree.value);
   const planName = computed(() => currentPlan.value.name);
   const planPrice = computed(() => currentPlan.value.price);
+
+  const availablePlans = computed(() => {
+    return Object.values(PLANS).map((plan) => {
+      const isCurrent = plan.id === planId.value;
+      const patientsLimit = plan.limits?.patients ?? 0;
+      const caregiversLimit = plan.limits?.caregivers ?? 0;
+      const alertsPerDay = plan.limits?.alertsPerDay ?? 0;
+
+      return {
+        ...plan,
+        isCurrent,
+        patientsLimit: patientsLimit === -1 ? 'Unlimited' : patientsLimit,
+        caregiversLimit: caregiversLimit === -1 ? 'Unlimited' : caregiversLimit,
+        alertsPerDay: alertsPerDay === -1 ? 'Unlimited' : alertsPerDay,
+        devicesAllowed: plan.modules?.patients?.max === -1 ? 'Unlimited' : (plan.modules?.patients?.max ?? 0),
+        reportsAvailable: plan.modules?.reports === 'available',
+        advancedMonitoring: plan.modules?.advancedMonitoring === 'available',
+        statistics: plan.modules?.statistics === 'available',
+        apiAccess: plan.modules?.apiAccess === 'available',
+        teamCollaboration: plan.modules?.administration === 'available',
+      };
+    });
+  });
 
   const PLAN_MAP = { Standard: 'free', Premium: 'professional', Enterprise: 'enterprise' };
 
@@ -24,6 +49,45 @@ export const useSubscriptionStore = defineStore('subscription', () => {
 
   function setRole(r) {
     role.value = (r || 'admin').toLowerCase();
+  }
+
+  async function changePlan(newPlanId) {
+    changing.value = true;
+    try {
+      await subscriptionService.changePlan(newPlanId);
+      planId.value = newPlanId;
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (user) {
+        const reverseMap = { free: 'Standard', basic: 'Basic', professional: 'Professional', enterprise: 'Enterprise' };
+        user.plan = reverseMap[newPlanId] || newPlanId;
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+      return { success: true };
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data?.title || 'Failed to change plan';
+      if (err.response?.status === 404) {
+        planId.value = newPlanId;
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (user) {
+          const reverseMap = { free: 'Standard', basic: 'Basic', professional: 'Professional', enterprise: 'Enterprise' };
+          user.plan = reverseMap[newPlanId] || newPlanId;
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+        return { success: true, offline: true };
+      }
+      return { success: false, error: msg };
+    } finally {
+      changing.value = false;
+    }
+  }
+
+  async function refreshSubscription() {
+    try {
+      const { data } = await subscriptionService.get();
+      if (data.plan) setPlan(data.plan);
+      if (data.role) setRole(data.role);
+    } catch {
+    }
   }
 
   function can(feature) {
@@ -42,7 +106,6 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       { key: 'dashboard', label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
       { key: 'patients', label: 'Patients', route: '/patients', icon: 'patients' },
       { key: 'alerts', label: 'Alerts', route: '/alerts', icon: 'alerts' },
-
       { key: 'settings', label: 'Settings', route: '/settings', icon: 'settings' },
     ];
     return modules.map((m) => ({
@@ -53,7 +116,9 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   });
 
   return {
-    planId, role, currentPlan, isFree, isPaid, planName, planPrice,
-    setPlan, setRole, can, isLocked, sidebarModules,
+    planId, role, currentPlan, isFree, isPaid, planName, planPrice, changing,
+    availablePlans,
+    setPlan, setRole, changePlan, refreshSubscription,
+    can, isLocked, sidebarModules,
   };
 });

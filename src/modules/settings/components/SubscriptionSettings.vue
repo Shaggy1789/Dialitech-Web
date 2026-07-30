@@ -6,6 +6,11 @@
       <div class="skeleton skeleton-row" style="width:40%"></div>
       <div class="skeleton skeleton-row" style="width:50%"></div>
       <div class="skeleton skeleton-benefits"></div>
+      <div class="skeleton skeleton-grid">
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
     </div>
     <div v-else-if="error" class="error-banner">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -16,56 +21,158 @@
       <span>{{ error }}</span>
       <button class="retry-btn" @click="fetch">Retry</button>
     </div>
-    <div v-else-if="!hasActiveSubscription" class="no-plan-card">
-      <div class="no-plan-icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="6" width="18" height="14" rx="2" stroke="#9ca3af" stroke-width="1.5"/>
-          <path d="M12 12V16" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="12" cy="10" r="0.75" fill="#9ca3af"/>
-        </svg>
-      </div>
-      <h4 class="no-plan-title">No Active Subscription</h4>
-      <p class="no-plan-desc">You don't currently have an active plan. Subscribe to unlock all features.</p>
-      <button class="view-plans-btn">View Plans</button>
-    </div>
-    <div v-else class="subscription-layout">
-      <div class="plan-badge" :class="planClass">{{ plan.name }}</div>
-      <div class="subscription-details">
-        <div class="sub-row">
-          <span class="sub-label">Current Plan</span>
-          <span class="sub-value">{{ plan.name }}</span>
+
+    <template v-else-if="!hasActiveSubscription">
+      <div class="no-plan-card">
+        <div class="no-plan-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="6" width="18" height="14" rx="2" stroke="#9ca3af" stroke-width="1.5"/>
+            <path d="M12 12V16" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="12" cy="10" r="0.75" fill="#9ca3af"/>
+          </svg>
         </div>
-        <div class="sub-row">
-          <span class="sub-label">Price</span>
-          <span class="sub-value price">{{ plan.price }}</span>
+        <h4 class="no-plan-title">No Active Subscription</h4>
+        <p class="no-plan-desc">You don't currently have an active plan. Subscribe to unlock all features.</p>
+        <button class="view-plans-btn" @click="scrollToPlans">Choose a Plan</button>
+      </div>
+    </template>
+
+    <template v-else>
+      <div class="current-plan-card">
+        <div class="current-plan-header">
+          <div>
+            <span class="plan-badge" :class="planClass">{{ plan.name }}</span>
+            <span class="status-badge">ACTIVE</span>
+          </div>
+          <div class="plan-price-display">{{ plan.price }}</div>
         </div>
-        <div class="sub-row">
-          <span class="sub-label">Status</span>
-          <span class="sub-value">{{ plan.status }}</span>
+
+        <div class="current-plan-details">
+          <div class="detail-row">
+            <span class="detail-label">Patients</span>
+            <span class="detail-value">{{ patientsLabel }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Caregivers</span>
+            <span class="detail-value">{{ caregiversLabel }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Devices</span>
+            <span class="detail-value">{{ devicesLabel }}</span>
+          </div>
+        </div>
+
+        <div class="current-plan-benefits">
+          <h4 class="benefits-title">Plan Benefits</h4>
+          <ul class="benefits-list">
+            <li v-for="(benefit, idx) in plan.benefits" :key="idx" class="benefit-item">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 8.5L6.5 11L12 5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              {{ benefit }}
+            </li>
+          </ul>
         </div>
       </div>
-      <div class="benefits-section">
-        <h4 class="benefits-title">Plan Benefits</h4>
-        <ul class="benefits-list">
-          <li v-for="(benefit, idx) in plan.benefits" :key="idx" class="benefit-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 8.5L6.5 11L12 5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            {{ benefit }}
-          </li>
-        </ul>
+
+      <div class="available-plans-section">
+        <h4 class="section-title">Available Plans</h4>
+        <div class="plans-grid">
+          <div
+            v-for="p in availablePlans"
+            :key="p.id"
+            class="plan-card"
+            :class="{
+              current: p.isCurrent,
+              featured: p.featured && !p.isCurrent,
+            }"
+          >
+            <div class="plan-card-header">
+              <div>
+                <span class="plan-card-name">{{ p.name }}</span>
+                <span class="plan-card-price">
+                  {{ p.price === 0 ? 'Free' : '$' + p.price + p.period }}
+                </span>
+              </div>
+              <span v-if="p.isCurrent" class="current-badge">Current Plan</span>
+            </div>
+
+            <p class="plan-card-desc">{{ p.description }}</p>
+
+            <ul class="plan-features">
+              <li v-for="(feat, idx) in p.features" :key="idx" class="feature-item">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 7l3 3 5-5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                {{ feat }}
+              </li>
+            </ul>
+
+            <div class="plan-limits">
+              <div class="limit-row">
+                <span class="limit-label">Patients</span>
+                <span class="limit-value">{{ p.patientsLimit }}</span>
+              </div>
+              <div class="limit-row">
+                <span class="limit-label">Caregivers</span>
+                <span class="limit-value">{{ p.caregiversLimit }}</span>
+              </div>
+              <div class="limit-row">
+                <span class="limit-label">Devices</span>
+                <span class="limit-value">{{ p.devicesAllowed }}</span>
+              </div>
+              <div class="limit-row">
+                <span class="limit-label">Reports</span>
+                <span class="limit-value">
+                  <svg v-if="p.reportsAvailable" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <svg v-else width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </span>
+              </div>
+              <div class="limit-row">
+                <span class="limit-label">API Access</span>
+                <span class="limit-value">
+                  <svg v-if="p.apiAccess" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <svg v-else width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </span>
+              </div>
+            </div>
+
+            <button
+              v-if="!p.isCurrent"
+              class="switch-btn"
+              :disabled="isChanging"
+              @click="openChangeModal(p)"
+            >
+              <svg v-if="isChanging" class="spinner" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="28" stroke-linecap="round"/>
+              </svg>
+              {{ isChanging ? 'Switching...' : 'Switch Plan' }}
+            </button>
+
+            <div v-if="p.isCurrent" class="disabled-overlay"></div>
+          </div>
+        </div>
       </div>
-      <button class="upgrade-btn">Upgrade Plan</button>
-    </div>
+    </template>
+
+    <ChangePlanModal
+      v-if="showChangeModal"
+      :new-plan="selectedPlan"
+      @close="showChangeModal = false"
+      @changed="onPlanChanged"
+    />
   </SettingsSection>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useSubscription } from '../../../composables/useSubscription';
 import SettingsSection from './SettingsSection.vue';
+import ChangePlanModal from './ChangePlanModal.vue';
 
-const { plan, loading, error, hasActiveSubscription, fetch } = useSubscription();
+const { plan, loading, error, hasActiveSubscription, availablePlans, changePlan, fetch, isChanging } = useSubscription();
+const showChangeModal = ref(false);
+const selectedPlan = ref(null);
 
 const planClass = computed(() => {
   if (!plan.value) return 'basic';
@@ -74,6 +181,35 @@ const planClass = computed(() => {
   if (name === 'professional') return 'professional';
   return 'basic';
 });
+
+const patientsLabel = computed(() => {
+  const l = plan.value?.limits?.patients;
+  return l === -1 ? 'Unlimited' : l;
+});
+
+const caregiversLabel = computed(() => {
+  const l = plan.value?.limits?.caregivers;
+  return l === -1 ? 'Unlimited' : l;
+});
+
+const devicesLabel = computed(() => {
+  const max = plan.value?.modules?.patients?.max;
+  return max === -1 ? 'Unlimited' : max ?? 'N/A';
+});
+
+function openChangeModal(p) {
+  selectedPlan.value = p;
+  showChangeModal.value = true;
+}
+
+function onPlanChanged() {
+  fetch();
+}
+
+function scrollToPlans() {
+  const el = document.querySelector('.available-plans-section');
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
 </script>
 
 <style scoped>
@@ -111,41 +247,69 @@ const planClass = computed(() => {
   color: #6b7280;
 }
 
-.subscription-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #16a34a;
+  margin-left: 8px;
 }
 
-.sub-row {
+.current-plan-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.current-plan-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.plan-price-display {
+  font-size: 22px;
+  font-weight: 700;
+  color: #059669;
+}
+
+.current-plan-details {
+  display: flex;
   gap: 16px;
-  padding: 10px 16px;
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
   background: #f9fafb;
   border-radius: 10px;
 }
 
-.sub-label {
-  font-size: 13px;
+.detail-label {
+  font-size: 12px;
   font-weight: 500;
-  color: #6b7280;
-  min-width: 110px;
-  flex-shrink: 0;
+  color: #9ca3af;
 }
 
-.sub-value {
-  font-size: 14px;
-  font-weight: 600;
+.detail-value {
+  font-size: 16px;
+  font-weight: 700;
   color: #111827;
 }
 
-.sub-value.price {
-  color: #059669;
-  font-size: 16px;
-}
-
-.benefits-section {
+.current-plan-benefits {
   background: #f9fafb;
   border-radius: 10px;
   padding: 16px 20px;
@@ -175,25 +339,176 @@ const planClass = computed(() => {
   color: #374151;
 }
 
-.upgrade-btn {
+.available-plans-section {
+  margin-top: 8px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.plan-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.plan-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.plan-card.featured {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.plan-card.current {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.plan-card-name {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.plan-card-price {
+  display: block;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.current-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.plan-card-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.plan-features {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.plan-limits {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-top: 1px solid #f3f4f6;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 16px;
+}
+
+.limit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.limit-label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.limit-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+}
+
+.switch-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 28px;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #ffffff;
+  padding: 10px 20px;
+  background: #2563eb;
+  color: #fff;
   border: none;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
-  width: fit-content;
+  transition: background 0.15s;
+  margin-top: auto;
+  width: 100%;
 }
 
-.upgrade-btn:hover {
-  opacity: 0.9;
+.switch-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.switch-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.disabled-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
 }
 
 .no-plan-card {
@@ -268,6 +583,18 @@ const planClass = computed(() => {
 .skeleton-benefits {
   height: 120px;
   border-radius: 10px;
+}
+
+.skeleton-grid {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.skeleton-card {
+  flex: 1;
+  height: 280px;
+  border-radius: 14px;
 }
 
 @keyframes shimmer {
