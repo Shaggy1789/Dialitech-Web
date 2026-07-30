@@ -6,8 +6,8 @@
           <span class="appearance-label">Theme</span>
           <span class="appearance-desc">Choose between light, dark, or system theme</span>
         </div>
-        <select class="field-select">
-          <option v-for="t in themes" :key="t" :selected="t === settings.appearance.theme">{{ t }}</option>
+        <select class="field-select" :value="theme" @change="setTheme($event.target.value)">
+          <option v-for="t in themeOptions" :key="t" :value="t">{{ t.charAt(0).toUpperCase() + t.slice(1) }}</option>
         </select>
       </div>
       <div class="appearance-row">
@@ -15,8 +15,8 @@
           <span class="appearance-label">Language</span>
           <span class="appearance-desc">Select your preferred language</span>
         </div>
-        <select class="field-select">
-          <option v-for="l in languages" :key="l" :selected="l === settings.appearance.language">{{ l }}</option>
+        <select class="field-select" :value="language" @change="setLanguage($event.target.value)">
+          <option v-for="opt in languageOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
         </select>
       </div>
       <div class="appearance-row">
@@ -24,8 +24,8 @@
           <span class="appearance-label">Font Size</span>
           <span class="appearance-desc">Adjust the text size across the application</span>
         </div>
-        <select class="field-select">
-          <option v-for="f in fontSizes" :key="f" :selected="f === settings.appearance.fontSize">{{ f }}</option>
+        <select class="field-select" :value="fontSize" @change="setFontSize($event.target.value)">
+          <option v-for="f in fontSizeOptions" :key="f" :value="f">{{ f.charAt(0).toUpperCase() + f.slice(1) }}</option>
         </select>
       </div>
       <div class="appearance-row">
@@ -33,8 +33,8 @@
           <span class="appearance-label">Compact Mode</span>
           <span class="appearance-desc">Reduce spacing for a denser layout</span>
         </div>
-        <label class="toggle" :class="{ active: settings.appearance.compactMode }">
-          <input type="checkbox" disabled />
+        <label class="toggle" :class="{ active: compactMode }" @click="setCompactMode(!compactMode)">
+          <input type="checkbox" :checked="compactMode" />
           <span class="toggle-slider" />
         </label>
       </div>
@@ -43,8 +43,15 @@
 </template>
 
 <script setup>
-import { settings, themes, languages, fontSizes } from '../data/settings.js';
+import { useAppearance } from '../../../composables/useAppearance';
 import SettingsSection from './SettingsSection.vue';
+
+const {
+  theme, setTheme, themeOptions,
+  language, setLanguage, languageOptions,
+  fontSize, setFontSize, fontSizeOptions,
+  compactMode, setCompactMode,
+} = useAppearance();
 </script>
 
 <style scoped>

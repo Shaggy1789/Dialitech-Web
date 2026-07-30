@@ -11,7 +11,7 @@
         <span class="breadcrumb-current">Settings</span>
       </nav>
     </div>
-    <button class="save-btn">
+    <button class="save-btn" :class="{ disabled: !store.hasChanges }" :disabled="!store.hasChanges" @click="handleSave">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M3 1H13L15 3V13C15 14.1 14.1 15 13 15H3C1.9 15 1 14.1 1 13V3C1 1.9 1.9 1 3 1Z" stroke="currentColor" stroke-width="1.5" />
         <path d="M11 1V6H5V1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -21,6 +21,17 @@
     </button>
   </header>
 </template>
+
+<script setup>
+import { useAppearanceStore } from '../../../stores/appearanceStore';
+
+const store = useAppearanceStore();
+
+function handleSave() {
+  store.save();
+  if (window.__toast) window.__toast.success('Settings updated successfully.');
+}
+</script>
 
 <style scoped>
 .settings-header {
@@ -88,12 +99,18 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s;
   white-space: nowrap;
   margin-top: 36px;
 }
 
-.save-btn:hover {
+.save-btn:hover:not(.disabled) {
   background: #1d4ed8;
+}
+
+.save-btn.disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 </style>
