@@ -52,9 +52,15 @@
         <h1 class="forgot-title">Forgot Password</h1>
         <p class="forgot-subtitle">Enter your email address or phone number associated with your account and we'll help you recover your password.</p>
 
-        <p v-if="feedback" class="feedback-msg">{{ feedback }}</p>
+        <p v-if="error" class="error-msg">{{ error }}</p>
+        <p v-if="successMsg" class="success-msg">{{ successMsg }}</p>
 
-        <ForgotPasswordForm ref="formRef" />
+        <ForgotPasswordForm
+          ref="formRef"
+          :loading="loading"
+          :error="error"
+          @submit="handleSubmit"
+        />
 
         <div class="forgot-footer">
           <router-link to="/login" class="back-link">
@@ -71,10 +77,34 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { authService } from '../../../services/auth/auth.service';
 import ForgotPasswordForm from '../components/ForgotPasswordForm.vue';
 
+const router = useRouter();
 const formRef = ref(null);
-const feedback = ref('');
+const loading = ref(false);
+const error = ref('');
+const successMsg = ref('');
+
+async function handleSubmit() {
+  const payload = formRef.value?.getPayload();
+  if (!payload) return;
+
+  loading.value = true;
+  error.value = '';
+  successMsg.value = '';
+
+  try {
+    await authService.sendRecoveryCode(payload);
+    successMsg.value = 'Recovery code sent successfully. Redirecting...';
+    setTimeout(() => router.push('/verify-code'), 1500);
+  } catch (err) {
+    error.value = err.response?.data?.message || err.message || 'Failed to send recovery code. Please try again.';
+  } finally {
+    loading.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -204,7 +234,16 @@ const feedback = ref('');
   line-height: 1.5;
 }
 
-.feedback-msg {
+.error-msg {
+  color: #ef4444;
+  font-size: 13px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+
+.success-msg {
   color: #059669;
   font-size: 13px;
   margin: 0 0 16px;

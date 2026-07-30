@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { authService } from '../services/authService';
+import { authService } from '../services/auth/auth.service';
 import { useSubscriptionStore } from './subscriptionStore';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -34,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
       initSubscription();
       return data;
     } catch (err) {
-      error.value = err.response?.data?.message || 'Login failed';
+      error.value = err.response?.data?.message || err.message || 'Login failed';
       throw err;
     } finally {
       loading.value = false;
@@ -45,10 +45,10 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true;
     error.value = '';
     try {
-      const response = await authService.register(data);
-      return response.data;
+      const { data: responseData } = await authService.register(data);
+      return responseData;
     } catch (err) {
-      error.value = err.response?.data?.message || 'Registration failed';
+      error.value = err.response?.data?.message || err.message || 'Registration failed';
       throw err;
     } finally {
       loading.value = false;
@@ -74,7 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user');
     const sub = useSubscriptionStore();
     sub.setPlan('free');
-    sub.setRole('admin');
+    sub.setRole('caregiver');
   }
 
   return {

@@ -1,7 +1,5 @@
 <template>
-  <PatientDashboardView v-if="sub.role === 'patient'" />
-
-  <div v-else class="dashboard-view">
+  <div class="dashboard-view">
     <SubscriptionBanner
       :plan="sub.planId"
       @upgrade="showModal = true"
@@ -55,7 +53,6 @@ import { useSubscriptionStore } from '../stores/subscriptionStore';
 import StatsCard from '../components/StatsCard.vue';
 import CriticalAlertsPanel from '../components/CriticalAlertsPanel.vue';
 import PatientMonitoringPanel from '../components/PatientMonitoringPanel.vue';
-import PatientDashboardView from '../components/PatientDashboardView.vue';
 import SubscriptionBanner from '../components/SubscriptionBanner.vue';
 import PermissionWrapper from '../components/PermissionWrapper.vue';
 import UpgradePlanModal from '../components/UpgradePlanModal.vue';

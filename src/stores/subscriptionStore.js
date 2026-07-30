@@ -5,7 +5,7 @@ import { hasFeature, isModuleLocked, isModuleAvailable } from '../config/permiss
 
 export const useSubscriptionStore = defineStore('subscription', () => {
   const planId = ref('free');
-  const role = ref('admin');
+  const role = ref('caregiver');
 
   const currentPlan = computed(() => PLANS[planId.value] || PLANS.free);
   const isFree = computed(() => planId.value === 'free');
@@ -39,7 +39,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       { key: 'dashboard', label: 'Dashboard', route: '/dashboard', icon: 'dashboard' },
       { key: 'patients', label: 'Patients', route: '/patients', icon: 'patients' },
       { key: 'alerts', label: 'Alerts', route: '/alerts', icon: 'alerts' },
-      { key: 'administration', label: 'User Management', route: '/users', icon: 'users' },
+
       { key: 'settings', label: 'Settings', route: '/settings', icon: 'settings' },
     ];
     return modules.map((m) => ({

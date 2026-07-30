@@ -33,38 +33,26 @@
           </svg>
         </div>
         <h2 class="left-title">Start Monitoring<br />Your Patients Today</h2>
-        <p class="left-desc">Create your account and get access to real-time patient monitoring, intelligent alerts, and comprehensive care management tools.</p>
+        <p class="left-desc">Create your caregiver account and get access to real-time patient monitoring, intelligent alerts, and comprehensive care management tools.</p>
       </div>
     </div>
 
     <div class="register-right">
       <RegisterCard>
-        <StepIndicator :currentStep="currentStep" />
+        <CaregiverRegisterForm ref="caregiverForm" />
 
-        <UserTypeSelection
-          v-if="currentStep === 1"
-          @select="onTypeSelected"
-        />
+        <TermsCheckbox />
 
-        <template v-if="currentStep === 2">
-          <CaregiverRegisterForm ref="caregiverForm" v-if="selectedType === 'caregiver'" />
-          <PatientRegisterForm ref="patientForm" v-if="selectedType === 'patient'" />
+        <p v-if="authStore.error" class="error-msg">{{ authStore.error }}</p>
 
-          <TermsCheckbox />
+        <button class="register-btn" :disabled="authStore.loading" @click="submitRegistration">
+          {{ authStore.loading ? 'Creating account...' : 'Create Account' }}
+        </button>
 
-          <p v-if="authStore.error" class="error-msg">{{ authStore.error }}</p>
-
-          <button class="register-btn" :disabled="authStore.loading" @click="submitRegistration">
-            {{ authStore.loading ? 'Creating account...' : 'Create Account' }}
-          </button>
-
-          <button class="back-btn" @click="goBack">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            Back
-          </button>
-        </template>
+        <p class="register-footer">
+          Already have an account?
+          <router-link to="/login" class="footer-link">Sign In</router-link>
+        </p>
       </RegisterCard>
     </div>
   </div>
@@ -75,35 +63,18 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../../stores/authStore';
 import RegisterCard from '../components/RegisterCard.vue';
-import StepIndicator from '../components/StepIndicator.vue';
-import UserTypeSelection from '../components/UserTypeSelection.vue';
 import CaregiverRegisterForm from '../components/CaregiverRegisterForm.vue';
-import PatientRegisterForm from '../components/PatientRegisterForm.vue';
 import TermsCheckbox from '../components/TermsCheckbox.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
-const currentStep = ref(1);
-const selectedType = ref(null);
 const caregiverForm = ref(null);
-const patientForm = ref(null);
-
-function onTypeSelected(type) {
-  selectedType.value = type;
-  currentStep.value = 2;
-}
-
-function goBack() {
-  currentStep.value = 1;
-  selectedType.value = null;
-}
 
 async function submitRegistration() {
-  const form = selectedType.value === 'caregiver' ? caregiverForm.value : patientForm.value;
-  if (!form) return;
+  if (!caregiverForm.value) return;
 
-  const payload = form.getPayload();
+  const payload = caregiverForm.value.getPayload();
   try {
     await authStore.register(payload);
     router.push('/login');
@@ -232,24 +203,20 @@ async function submitRegistration() {
   cursor: not-allowed;
 }
 
-.back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 10px;
-  background: none;
-  border: none;
+.register-footer {
+  text-align: center;
   font-size: 14px;
-  font-weight: 500;
   color: #6b7280;
-  cursor: pointer;
-  transition: color 0.15s;
-  margin-top: 10px;
+  margin-top: 24px;
 }
 
-.back-btn:hover {
-  color: #374151;
+.footer-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
 }
 </style>

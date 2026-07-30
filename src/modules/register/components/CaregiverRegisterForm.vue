@@ -85,6 +85,7 @@ function getPayload() {
     name: `${form.firstName} ${form.lastName}`.trim(),
     email: form.email,
     password: form.password,
+    plan: 'free',
     age: form.dob ? new Date().getFullYear() - new Date(form.dob).getFullYear() : 0,
   };
 }

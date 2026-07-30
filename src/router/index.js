@@ -11,11 +11,9 @@ import ResetPasswordView from '../modules/authentication/views/ResetPasswordView
 import DashboardView from '../pages/DashboardView.vue';
 import PatientsView from '../modules/patients/views/PatientsView.vue';
 import PatientDetailView from '../modules/patients/views/PatientDetailView.vue';
-import UserManagementView from '../modules/user-management/views/UserManagementView.vue';
 import AlertsView from '../modules/alerts/views/AlertsView.vue';
 import SettingsView from '../modules/settings/views/SettingsView.vue';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
-import { canAccessRoute } from '../config/permissions';
 
 const routes = [
   {
@@ -46,14 +44,6 @@ const routes = [
     children: [
       { path: '', name: 'patients', component: PatientsView },
       { path: ':id', name: 'patient-detail', component: PatientDetailView },
-    ],
-  },
-  {
-    path: '/users',
-    component: DashboardLayout,
-    meta: { requiresAuth: true, module: 'administration' },
-    children: [
-      { path: '', name: 'user-management', component: UserManagementView },
     ],
   },
   {
