@@ -12,20 +12,59 @@
       </div>
       <h1 class="login-title">Welcome back</h1>
       <p class="login-subtitle">Sign in to your account to continue</p>
+
+      <div v-if="showSuccess" class="success-banner">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="10" fill="#059669" />
+          <path d="M6 10l2.5 2.5L14 7" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div>
+          <p class="success-title">Login successful</p>
+          <p class="success-subtitle">Welcome back!</p>
+        </div>
+      </div>
+
+      <div v-if="authStore.error && !showSuccess" class="error-banner">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="10" fill="#dc2626" />
+          <path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span>{{ authStore.error }}</span>
+      </div>
+
       <form class="login-form" @submit.prevent="handleLogin">
         <div class="field">
           <label class="field-label">Email</label>
-          <input v-model="email" type="email" class="field-input" placeholder="you@example.com" required />
+          <input
+            v-model="email"
+            type="email"
+            class="field-input"
+            :class="{ 'input-error': authStore.fieldErrors?.email }"
+            placeholder="you@example.com"
+            required
+          />
+          <p v-if="authStore.fieldErrors?.email" class="field-error">{{ authStore.fieldErrors.email }}</p>
         </div>
         <div class="field">
           <label class="field-label">Password</label>
-          <input v-model="password" type="password" class="field-input" placeholder="••••••••" required />
+          <input
+            v-model="password"
+            type="password"
+            class="field-input"
+            :class="{ 'input-error': authStore.fieldErrors?.password }"
+            placeholder="••••••••"
+            required
+          />
+          <p v-if="authStore.fieldErrors?.password" class="field-error">{{ authStore.fieldErrors.password }}</p>
         </div>
         <router-link to="/forgot-password" class="forgot-link">Forgot your password?</router-link>
-        <p v-if="authStore.error" class="error-msg">{{ authStore.error }}</p>
-        <button type="submit" class="login-btn" :disabled="authStore.loading">
-          {{ authStore.loading ? 'Signing in...' : 'Sign In' }}
-        </button>
+        <LoadingButton
+          type="submit"
+          :loading="authStore.loading"
+          loading-text="Signing in..."
+        >
+          Sign In
+        </LoadingButton>
       </form>
       <p class="login-footer">
         Don&apos;t have an account?
@@ -45,19 +84,21 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/authStore';
+import LoadingButton from '../components/LoadingButton.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
-
 const email = ref('');
 const password = ref('');
+const showSuccess = ref(false);
 
 async function handleLogin() {
-  try {
-    await authStore.login(email.value, password.value);
-    router.push('/dashboard');
-  } catch {
-    /* error is stored in authStore.error */
+  authStore.clearErrors();
+  showSuccess.value = false;
+  const result = await authStore.login(email.value, password.value);
+  if (result.success) {
+    showSuccess.value = true;
+    setTimeout(() => router.push('/dashboard'), 1500);
   }
 }
 </script>
@@ -110,6 +151,45 @@ async function handleLogin() {
   margin: 0 0 28px 0;
 }
 
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.success-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #166534;
+  margin: 0;
+}
+
+.success-subtitle {
+  font-size: 13px;
+  color: #15803d;
+  margin: 2px 0 0;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #991b1b;
+  text-align: left;
+}
+
 .login-form {
   display: flex;
   flex-direction: column;
@@ -146,6 +226,22 @@ async function handleLogin() {
   background: #ffffff;
 }
 
+.field-input.input-error {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.field-input.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+  border-color: #dc2626;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 0;
+}
+
 .forgot-link {
   align-self: flex-end;
   font-size: 13px;
@@ -159,34 +255,6 @@ async function handleLogin() {
 .forgot-link:hover {
   text-decoration: underline;
   color: #1d4ed8;
-}
-
-.error-msg {
-  color: #ef4444;
-  font-size: 13px;
-  margin: 0;
-}
-
-.login-btn {
-  padding: 12px;
-  background: #2563eb;
-  color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-  margin-top: 4px;
-}
-
-.login-btn:hover {
-  background: #1d4ed8;
-}
-
-.login-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .login-footer {

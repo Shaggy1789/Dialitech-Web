@@ -43,11 +43,21 @@
 
         <TermsCheckbox />
 
-        <p v-if="authStore.error" class="error-msg">{{ authStore.error }}</p>
+        <div v-if="authStore.error" class="error-banner">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="10" fill="#dc2626" />
+            <path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <span>{{ authStore.error }}</span>
+        </div>
 
-        <button class="register-btn" :disabled="authStore.loading" @click="submitRegistration">
-          {{ authStore.loading ? 'Creating account...' : 'Create Account' }}
-        </button>
+        <LoadingButton
+          :loading="authStore.loading"
+          loading-text="Creating account..."
+          @click="submitRegistration"
+        >
+          Create Account
+        </LoadingButton>
 
         <p class="register-footer">
           Already have an account?
@@ -62,24 +72,22 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../../stores/authStore';
+import LoadingButton from '../../../components/LoadingButton.vue';
 import RegisterCard from '../components/RegisterCard.vue';
 import CaregiverRegisterForm from '../components/CaregiverRegisterForm.vue';
 import TermsCheckbox from '../components/TermsCheckbox.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
-
 const caregiverForm = ref(null);
 
 async function submitRegistration() {
   if (!caregiverForm.value) return;
-
+  authStore.clearErrors();
   const payload = caregiverForm.value.getPayload();
-  try {
-    await authStore.register(payload);
+  const result = await authStore.register(payload);
+  if (result.success) {
     router.push('/login');
-  } catch {
-    /* error is stored in authStore.error */
   }
 }
 </script>
@@ -173,34 +181,18 @@ async function submitRegistration() {
   overflow-y: auto;
 }
 
-.error-msg {
-  color: #ef4444;
-  font-size: 13px;
-  text-align: center;
-  margin: 8px 0 0;
-}
-
-.register-btn {
-  width: 100%;
-  padding: 12px;
-  background: #2563eb;
-  color: #ffffff;
-  border: none;
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-  margin-top: 24px;
-}
-
-.register-btn:hover {
-  background: #1d4ed8;
-}
-
-.register-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #991b1b;
+  text-align: left;
 }
 
 .register-footer {

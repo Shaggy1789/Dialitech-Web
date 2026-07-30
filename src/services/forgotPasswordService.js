@@ -9,22 +9,14 @@ export const forgotPasswordService = {
         { "method": "email", "value": "user@email.com" }
         { "method": "phone", "value": "+521234567890" }
     */
-    return api.post('/api/auth/forgot-password', data);
+    return api.post('/auth/forgot-password', data);
   },
 
   verifyCode(data) {
-    /*
-      data = { code: string, method: string, value: string }
-      POST /api/auth/verify-code
-    */
-    return api.post('/api/auth/verify-code', data);
+    return api.post('/auth/verify-code', data);
   },
 
   resetPassword(data) {
-    /*
-      data = { token: string, newPassword: string, confirmPassword: string }
-      POST /api/auth/reset-password
-    */
-    return api.post('/api/auth/reset-password', data);
+    return api.post('/auth/reset-password', data);
   },
 };

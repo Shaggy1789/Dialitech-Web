@@ -13,9 +13,12 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   const planName = computed(() => currentPlan.value.name);
   const planPrice = computed(() => currentPlan.value.price);
 
+  const PLAN_MAP = { Standard: 'free', Premium: 'professional', Enterprise: 'enterprise' };
+
   function setPlan(id) {
-    if (PLANS[id]) {
-      planId.value = id;
+    const mapped = PLAN_MAP[id] || id;
+    if (PLANS[mapped]) {
+      planId.value = mapped;
     }
   }
 

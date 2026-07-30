@@ -14,7 +14,7 @@ export const PLANS = {
     ],
     modules: {
       dashboard: 'available',
-      patients: { status: 'available', max: 3 },
+      patients: { status: 'available', max: 1 },
       alerts: { status: 'available', max: 5 },
       reports: 'locked',
       statistics: 'locked',
@@ -24,7 +24,7 @@ export const PLANS = {
       apiAccess: 'locked',
     },
     limits: {
-      patients: 3,
+      patients: 1,
       caregivers: 1,
       alertsPerDay: 5,
     },

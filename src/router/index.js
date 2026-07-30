@@ -70,22 +70,18 @@ const router = createRouter({
   linkActiveClass: 'active',
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const token = localStorage.getItem('token');
 
   if (to.meta.requiresAuth && !token) {
-    next({ name: 'login' });
-    return;
+    return { name: 'login' };
   }
 
   const sub = useSubscriptionStore();
   const routeModule = to.meta.module;
   if (to.meta.requiresAuth && routeModule && !sub.can(routeModule)) {
-    next({ name: 'dashboard' });
-    return;
+    return { name: 'dashboard' };
   }
-
-  next();
 });
 
 export default router;

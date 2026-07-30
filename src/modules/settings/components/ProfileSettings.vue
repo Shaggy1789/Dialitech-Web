@@ -5,23 +5,15 @@
       <div class="profile-fields">
         <div class="field-row">
           <label class="field-label">Full Name</label>
-          <input class="field-input" :value="settings.profile.name" readonly />
+          <input class="field-input" :value="authStore.userName" readonly />
         </div>
         <div class="field-row">
           <label class="field-label">Email</label>
-          <input class="field-input" :value="settings.profile.email" readonly />
+          <input class="field-input" :value="authStore.userEmail" readonly />
         </div>
         <div class="field-row">
           <label class="field-label">Phone</label>
-          <input class="field-input" :value="settings.profile.phone" readonly />
-        </div>
-        <div class="field-row">
-          <label class="field-label">Date of Birth</label>
-          <input class="field-input" :value="settings.profile.dob" readonly />
-        </div>
-        <div class="field-row">
-          <label class="field-label">Address</label>
-          <input class="field-input" :value="settings.profile.address" readonly />
+          <input class="field-input" :value="authStore.user?.phone || ''" readonly />
         </div>
       </div>
     </div>
@@ -29,9 +21,11 @@
 </template>
 
 <script setup>
-import { settings } from '../data/settings.js';
+import { useAuthStore } from '../../../stores/authStore';
 import SettingsSection from './SettingsSection.vue';
 import AvatarUploader from './AvatarUploader.vue';
+
+const authStore = useAuthStore();
 </script>
 
 <style scoped>

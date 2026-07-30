@@ -4,59 +4,38 @@
       <h2 class="panel-title">Critical Alerts</h2>
       <button class="view-all-btn">View All</button>
     </div>
-    <div class="alerts-list">
+    <div v-if="alerts.length" class="alerts-list">
       <CriticalAlertCard
         v-for="alert in alerts"
         :key="alert.id"
-        :patient="alert.patient"
+        :patient="alert.patientName"
         :type="alert.type"
-        :time="alert.time"
-        :status="alert.status"
+        :time="alert.date"
+        :status="alert.priority === 'Critical' ? 'Critical' : 'Warning'"
       />
+    </div>
+    <div v-else class="alerts-empty">
+      <p>No critical alerts at this time</p>
     </div>
   </section>
 </template>
 
 <script setup>
+import { computed, onMounted } from 'vue';
+import { useAuthStore } from '../stores/authStore';
+import { useAlertStore } from '../stores/alertStore';
 import CriticalAlertCard from './CriticalAlertCard.vue';
 
-const alerts = [
-  {
-    id: 1,
-    patient: 'Robert Johnson',
-    type: 'Kidney Function Decline',
-    time: 'Today, 10:45 AM',
-    status: 'Critical',
-  },
-  {
-    id: 2,
-    patient: 'Emily Davis',
-    type: 'High Potassium Levels',
-    time: 'Today, 09:15 AM',
-    status: 'Warning',
-  },
-  {
-    id: 3,
-    patient: 'Michael Brown',
-    type: 'Missed Dialysis Session',
-    time: 'Today, 08:30 AM',
-    status: 'Critical',
-  },
-  {
-    id: 4,
-    patient: 'Linda Williams',
-    type: 'Rapid Weight Gain',
-    time: 'Yesterday, 07:10 PM',
-    status: 'Warning',
-  },
-  {
-    id: 5,
-    patient: 'Thomas Garcia',
-    type: 'Low Hemoglobin',
-    time: 'Yesterday, 03:45 PM',
-    status: 'Critical',
-  },
-];
+const authStore = useAuthStore();
+const alertStore = useAlertStore();
+
+const alerts = computed(() => alertStore.alerts.slice(0, 5));
+
+onMounted(() => {
+  if (authStore.userId) {
+    alertStore.fetchByUser(authStore.userId);
+  }
+});
 </script>
 
 <style scoped>
@@ -103,5 +82,12 @@ const alerts = [
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.alerts-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
 }
 </style>

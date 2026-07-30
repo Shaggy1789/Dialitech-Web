@@ -3,7 +3,7 @@
     <div class="panel-header">
       <h2 class="panel-title">Active Patient Monitoring</h2>
     </div>
-    <div class="patients-grid">
+    <div v-if="patients.length" class="patients-grid">
       <PatientMonitoringCard
         v-for="patient in patients"
         :key="patient.id"
@@ -15,68 +15,35 @@
         :temperature="patient.temperature"
       />
     </div>
+    <div v-else class="patients-empty">
+      <p>No patients registered yet</p>
+    </div>
   </section>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue';
+import api from '../services/api';
 import PatientMonitoringCard from './PatientMonitoringCard.vue';
 
-const patients = [
-  {
-    id: 1,
-    name: 'James Anderson',
-    age: 58,
-    status: 'Normal',
-    heartRate: 72,
-    bloodPressure: '120/80',
-    temperature: 98.2,
-  },
-  {
-    id: 2,
-    name: 'Patricia Moore',
-    age: 63,
-    status: 'Warning',
-    heartRate: 88,
-    bloodPressure: '140/90',
-    temperature: 99.5,
-  },
-  {
-    id: 3,
-    name: 'Richard Taylor',
-    age: 55,
-    status: 'Critical',
-    heartRate: 96,
-    bloodPressure: '150/95',
-    temperature: 100.1,
-  },
-  {
-    id: 4,
-    name: 'Susan Clark',
-    age: 49,
-    status: 'Normal',
-    heartRate: 68,
-    bloodPressure: '118/75',
-    temperature: 98.6,
-  },
-  {
-    id: 5,
-    name: 'Robert Smith',
-    age: 67,
-    status: 'Normal',
-    heartRate: 74,
-    bloodPressure: '122/82',
-    temperature: 98.4,
-  },
-  {
-    id: 6,
-    name: 'Maria Lopez',
-    age: 52,
-    status: 'Warning',
-    heartRate: 82,
-    bloodPressure: '135/88',
-    temperature: 99.1,
-  },
-];
+const patients = ref([]);
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/patients');
+    patients.value = (data || []).map((p) => ({
+      id: p.id,
+      name: p.name || '',
+      age: p.age || 0,
+      status: p.status || 'Normal',
+      heartRate: p.heartRate || 0,
+      bloodPressure: p.bloodPressure || '',
+      temperature: p.temperature || 0,
+    }));
+  } catch {
+    patients.value = [];
+  }
+});
 </script>
 
 <style scoped>
@@ -103,5 +70,12 @@ const patients = [
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   padding: 16px 20px 20px;
+}
+
+.patients-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
 }
 </style>

@@ -7,86 +7,62 @@
     <div class="fields-grid">
       <div class="field">
         <label class="field-label">First Name</label>
-        <input v-model="form.firstName" class="field-input" placeholder="John" />
+        <input v-model="form.name" class="field-input" :class="{ 'input-error': fieldErrors?.name }" placeholder="John" />
+        <p v-if="fieldErrors?.name" class="field-error">{{ fieldErrors.name }}</p>
       </div>
       <div class="field">
         <label class="field-label">Last Name</label>
-        <input v-model="form.lastName" class="field-input" placeholder="Doe" />
+        <input v-model="form.lastname" class="field-input" placeholder="Doe" />
       </div>
       <div class="field">
         <label class="field-label">Email</label>
-        <input v-model="form.email" type="email" class="field-input" placeholder="you@example.com" />
+        <input v-model="form.email" type="email" class="field-input" :class="{ 'input-error': fieldErrors?.email }" placeholder="you@example.com" />
+        <p v-if="fieldErrors?.email" class="field-error">{{ fieldErrors.email }}</p>
       </div>
       <div class="field">
         <label class="field-label">Phone</label>
-        <input v-model="form.phone" type="tel" class="field-input" placeholder="+1 (555) 000-0000" />
+        <input v-model="form.phone" type="tel" class="field-input" :class="{ 'input-error': fieldErrors?.phone }" placeholder="+1 (555) 000-0000" />
+        <p v-if="fieldErrors?.phone" class="field-error">{{ fieldErrors.phone }}</p>
       </div>
-      <div class="field">
-        <label class="field-label">Username</label>
-        <input v-model="form.username" class="field-input" placeholder="johndoe" />
-      </div>
-      <div class="field">
-        <label class="field-label">Gender</label>
-        <select v-model="form.gender" class="field-select">
-          <option value="" disabled selected>Select</option>
-          <option>Male</option>
-          <option>Female</option>
-          <option>Non-binary</option>
-          <option>Prefer not to say</option>
-        </select>
-      </div>
-      <div class="field">
-        <label class="field-label">Date of Birth</label>
-        <input v-model="form.dob" class="field-input" type="date" />
-      </div>
-      <div class="field" />
       <div class="field">
         <label class="field-label">Password</label>
-        <div class="input-wrapper">
-          <input v-model="form.password" class="field-input" type="password" placeholder="••••••••" />
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5C7 5 2.73 8.11 1 12C2.73 15.89 7 19 12 19C17 19 21.27 15.89 23 12C21.27 8.11 17 5 12 5Z" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" />
-            <circle cx="12" cy="12" r="3" stroke="#9ca3af" stroke-width="1.5" />
-          </svg>
-        </div>
+        <input v-model="form.password" type="password" class="field-input" :class="{ 'input-error': fieldErrors?.password }" placeholder="••••••••" />
+        <p v-if="fieldErrors?.password" class="field-error">{{ fieldErrors.password }}</p>
       </div>
       <div class="field">
         <label class="field-label">Confirm Password</label>
-        <div class="input-wrapper">
-          <input v-model="form.confirmPassword" class="field-input" type="password" placeholder="••••••••" />
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5C7 5 2.73 8.11 1 12C2.73 15.89 7 19 12 19C17 19 21.27 15.89 23 12C21.27 8.11 17 5 12 5Z" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" />
-            <circle cx="12" cy="12" r="3" stroke="#9ca3af" stroke-width="1.5" />
-          </svg>
-        </div>
+        <input v-model="form.confirmPassword" type="password" class="field-input" placeholder="••••••••" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
+import { useAuthStore } from '../../../stores/authStore';
 import RegisterAvatarUploader from './RegisterAvatarUploader.vue';
 
+const authStore = useAuthStore();
+const fieldErrors = computed(() => authStore.fieldErrors || {});
+
 const form = reactive({
-  firstName: '',
-  lastName: '',
+  name: '',
+  lastname: '',
   email: '',
   phone: '',
-  username: '',
-  gender: '',
-  dob: '',
   password: '',
   confirmPassword: '',
 });
 
 function getPayload() {
   return {
-    name: `${form.firstName} ${form.lastName}`.trim(),
+    name: form.name,
+    lastname: form.lastname,
     email: form.email,
+    phone: form.phone,
     password: form.password,
+    imageUrl: '',
     plan: 'free',
-    age: form.dob ? new Date().getFullYear() - new Date(form.dob).getFullYear() : 0,
   };
 }
 
@@ -143,47 +119,23 @@ defineExpose({ form, getPayload });
   background: #ffffff;
 }
 
+.field-input.input-error {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.field-input.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+  border-color: #dc2626;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 0;
+}
+
 .field-input::placeholder {
   color: #d1d5db;
-}
-
-.field-select {
-  width: 100%;
-  padding: 10px 32px 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 14px;
-  color: #374151;
-  background: #f9fafb;
-  outline: none;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='11' height='7' viewBox='0 0 11 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 1.5L5.5 5.5L9.5 1.5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 11px center;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  box-sizing: border-box;
-}
-
-.field-select:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-  background: #ffffff;
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-wrapper .field-input {
-  padding-right: 36px;
-}
-
-.input-icon {
-  position: absolute;
-  right: 11px;
-  pointer-events: none;
 }
 </style>

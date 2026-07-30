@@ -6,4 +6,12 @@ export default defineConfig({
   css: {
     transformer: 'postcss',
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://api-dialitech-core-v2.onrender.com',
+        changeOrigin: true,
+      },
+    },
+  },
 })

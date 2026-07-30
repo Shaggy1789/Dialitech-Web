@@ -2,22 +2,22 @@ import api from './api';
 
 export const userService = {
   getAll() {
-    return api.get('/api/Users');
+    return api.get('/Users');
   },
 
   getById(id) {
-    return api.get(`/api/Users/${id}`);
+    return api.get(`/Users/${id}`);
   },
 
   create(data) {
-    return api.post('/api/Users', data);
+    return api.post('/Users', data);
   },
 
   update(id, data) {
-    return api.put(`/api/Users/${id}`, data);
+    return api.put(`/Users/${id}`);
   },
 
   delete(id) {
-    return api.delete(`/api/Users/${id}`);
+    return api.delete(`/Users/${id}`);
   },
 };

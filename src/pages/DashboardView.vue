@@ -12,15 +12,15 @@
 
     <div class="kpi-grid">
       <PermissionWrapper feature="dashboard" @open-modal="showModal = true">
-        <StatsCard title="Patients Monitored" value="24 / 30" variant="blue" />
+        <StatsCard title="Patients Monitored" :value="`${patientCount} / ${patientLimit}`" variant="blue" />
       </PermissionWrapper>
 
       <PermissionWrapper feature="alerts" @open-modal="showModal = true">
-        <StatsCard title="Critical Alerts" value="2 Critical" variant="red" />
+        <StatsCard title="Critical Alerts" :value="`${criticalAlertsCount} Critical`" variant="red" />
       </PermissionWrapper>
 
       <PermissionWrapper feature="dashboard" @open-modal="showModal = true">
-        <StatsCard title="Patients Online" value="100%" variant="green" />
+        <StatsCard title="Patients Online" value="--" variant="green" />
       </PermissionWrapper>
 
       <PermissionWrapper feature="statistics" @open-modal="showModal = true">
@@ -48,8 +48,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useAuthStore } from '../stores/authStore';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
+import { useAlertStore } from '../stores/alertStore';
+import api from '../services/api';
 import StatsCard from '../components/StatsCard.vue';
 import CriticalAlertsPanel from '../components/CriticalAlertsPanel.vue';
 import PatientMonitoringPanel from '../components/PatientMonitoringPanel.vue';
@@ -58,7 +61,33 @@ import PermissionWrapper from '../components/PermissionWrapper.vue';
 import UpgradePlanModal from '../components/UpgradePlanModal.vue';
 
 const sub = useSubscriptionStore();
+const authStore = useAuthStore();
+const alertStore = useAlertStore();
 const showModal = ref(false);
+const patientCount = ref(0);
+
+const criticalAlertsCount = computed(() =>
+  alertStore.alerts.filter((a) => a.priority === 'Critical').length
+);
+
+const patientLimit = computed(() => {
+  const plan = sub.currentPlan;
+  const mod = plan.modules?.patients;
+  if (mod && typeof mod === 'object' && mod.max) return mod.max;
+  return '--';
+});
+
+onMounted(async () => {
+  try {
+    const { data: patients } = await api.get('/patients');
+    patientCount.value = (patients || []).length;
+  } catch {
+    patientCount.value = 0;
+  }
+  if (authStore.userId) {
+    await alertStore.fetchByUser(authStore.userId);
+  }
+});
 
 function onSelectPlan(planId) {
   sub.setPlan(planId);

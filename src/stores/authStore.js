@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || '');
   const loading = ref(false);
   const error = ref('');
+  const fieldErrors = ref({});
 
   const isAuthenticated = computed(() => !!token.value);
   const userName = computed(() => user.value?.name || '');
@@ -25,17 +26,21 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(email, password) {
     loading.value = true;
     error.value = '';
+    fieldErrors.value = {};
     try {
       const { data } = await authService.login({ email, password });
+      const caregiver = data.caregiver || data.user || data;
       token.value = data.token;
-      user.value = data.user;
+      user.value = caregiver;
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(caregiver));
       initSubscription();
-      return data;
+      return { success: true, caregiver };
     } catch (err) {
-      error.value = err.response?.data?.message || err.message || 'Login failed';
-      throw err;
+      const parsed = authService.extractError(err);
+      error.value = parsed.message;
+      fieldErrors.value = parsed.fields;
+      return { success: false, error: parsed.message, fields: parsed.fields };
     } finally {
       loading.value = false;
     }
@@ -44,12 +49,15 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(data) {
     loading.value = true;
     error.value = '';
+    fieldErrors.value = {};
     try {
       const { data: responseData } = await authService.register(data);
-      return responseData;
+      return { success: true, data: responseData };
     } catch (err) {
-      error.value = err.response?.data?.message || err.message || 'Registration failed';
-      throw err;
+      const parsed = authService.extractError(err);
+      error.value = parsed.message;
+      fieldErrors.value = parsed.fields;
+      return { success: false, error: parsed.message, fields: parsed.fields };
     } finally {
       loading.value = false;
     }
@@ -67,6 +75,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function clearErrors() {
+    error.value = '';
+    fieldErrors.value = {};
+  }
+
   function logout() {
     user.value = null;
     token.value = '';
@@ -78,8 +91,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    user, token, loading, error,
+    user, token, loading, error, fieldErrors,
     isAuthenticated, userName, userEmail, userId,
-    login, register, fetchMe, logout, initSubscription,
+    login, register, fetchMe, logout, initSubscription, clearErrors,
   };
 });
