@@ -9,15 +9,15 @@
       </div>
     </td>
     <td class="cell-data">{{ patient.age }}</td>
-    <td class="cell-data">{{ patient.gender }}</td>
-    <td class="cell-data">{{ patient.doctor }}</td>
-    <td class="cell-data">{{ patient.lastSession }}</td>
-    <td class="cell-data">{{ patient.nextSession }}</td>
+    <td class="cell-data">{{ patient.gender || '--' }}</td>
+    <td class="cell-data">{{ patient.doctor || '--' }}</td>
+    <td class="cell-data">{{ patient.lastSession || '--' }}</td>
+    <td class="cell-data">{{ patient.nextSession || '--' }}</td>
     <td class="cell-status">
       <StatusBadge :status="patient.status" />
     </td>
     <td class="cell-actions">
-      <PatientActions :patient-id="patient.id" />
+      <PatientActions :patient-id="patient.id" @delete="$emit('delete', patient.id)" />
     </td>
   </tr>
 </template>
@@ -31,12 +31,14 @@ const props = defineProps({
   patient: { type: Object, required: true },
 });
 
+defineEmits(['delete']);
+
 const avatarColors = ['#2563eb', '#7c3aed', '#db2777', '#dc2626', '#d97706', '#059669', '#0891b2', '#4f46e5', '#9333ea', '#e11d48'];
 const initials = computed(() =>
   props.patient.name.split(' ').map(n => n[0]).join('').toUpperCase()
 );
 const avatarColor = computed(() =>
-  avatarColors[props.patient.id % avatarColors.length]
+  avatarColors[Number(props.patient.id) % avatarColors.length]
 );
 </script>
 

@@ -19,6 +19,7 @@
             v-for="patient in patients"
             :key="patient.id"
             :patient="patient"
+            @delete="$emit('delete', $event)"
           />
         </tbody>
       </table>
@@ -32,6 +33,7 @@ import PatientsTableRow from './PatientsTableRow.vue';
 defineProps({
   patients: { type: Array, required: true },
 });
+defineEmits(['delete']);
 </script>
 
 <style scoped>

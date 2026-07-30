@@ -6,17 +6,10 @@
         <circle cx="8" cy="8" r="2.5" stroke="#6b7280" stroke-width="1.3" />
       </svg>
     </router-link>
-    <button class="action-btn" title="Edit patient">
+    <button class="action-btn delete-btn" title="Delete patient" @click="$emit('delete')">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M11.5 1.5L14.5 4.5L5.5 13.5L1.5 14.5L2.5 10.5L11.5 1.5Z" stroke="#6b7280" stroke-width="1.3" stroke-linejoin="round" />
-        <path d="M9.5 3.5L12.5 6.5" stroke="#6b7280" stroke-width="1.3" />
-      </svg>
-    </button>
-    <button class="action-btn" title="More options">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="3" r="1.5" fill="#9ca3af" />
-        <circle cx="8" cy="8" r="1.5" fill="#9ca3af" />
-        <circle cx="8" cy="13" r="1.5" fill="#9ca3af" />
+        <path d="M3 4h10M5.5 4V2.5a1 1 0 011-1h3a1 1 0 011 1V4M12 4v9a1 1 0 01-1 1H5a1 1 0 01-1-1V4" stroke="#6b7280" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M6.5 7v4M9.5 7v4" stroke="#6b7280" stroke-width="1.3" stroke-linecap="round" />
       </svg>
     </button>
   </div>
@@ -26,6 +19,7 @@
 defineProps({
   patientId: { type: [Number, String], required: true },
 });
+defineEmits(['delete']);
 </script>
 
 <style scoped>
@@ -58,7 +52,7 @@ defineProps({
   stroke: #2563eb;
 }
 
-.action-btn:hover svg circle[fill] {
-  fill: #2563eb;
+.delete-btn:hover svg path {
+  stroke: #dc2626;
 }
 </style>

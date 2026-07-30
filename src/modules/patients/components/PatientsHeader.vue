@@ -4,7 +4,7 @@
       <h1 class="page-title">{{ title }}</h1>
       <p class="page-subtitle">{{ subtitle }}</p>
     </div>
-    <button class="add-btn">
+    <button class="add-btn" @click="$emit('add')">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M9 3V15M3 9H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
@@ -18,6 +18,7 @@ defineProps({
   title: { type: String, required: true },
   subtitle: { type: String, default: '' },
 });
+defineEmits(['add']);
 </script>
 
 <style scoped>
