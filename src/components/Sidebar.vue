@@ -1,5 +1,17 @@
 <template>
-  <aside class="sidebar">
+  <aside
+    class="sidebar"
+    :class="{
+      'sidebar-open': layout.sidebarOpen.value,
+      'sidebar-collapsed': layout.sidebarCollapsed.value,
+    }"
+  >
+    <button class="sidebar-close" @click="layout.closeSidebar()" aria-label="Close menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M5 5L15 15M15 5L5 15" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+    </button>
+
     <div class="brand">
       <div class="logo">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -67,6 +79,12 @@
         <p class="user-role">{{ userRoleLabel }}</p>
       </div>
     </div>
+    <button class="collapse-toggle" @click="layout.toggleCollapsed()" aria-label="Collapse sidebar">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M11 13L6 9L11 5" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span class="collapse-label">Collapse</span>
+    </button>
   </aside>
 
   <UpgradePlanModal
@@ -81,12 +99,14 @@
 import { ref, computed } from 'vue';
 import { useAuthStore } from '../stores/authStore';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
+import { useLayout } from '../composables/useLayout';
 import PlanBadge from './PlanBadge.vue';
 import UserAvatar from './UserAvatar.vue';
 import UpgradePlanModal from './UpgradePlanModal.vue';
 
 const authStore = useAuthStore();
 const sub = useSubscriptionStore();
+const layout = useLayout();
 const showUpgradeModal = ref(false);
 
 const visibleModules = computed(() => {
@@ -123,7 +143,26 @@ async function onSelectPlan(planId) {
   height: 100vh;
   position: sticky;
   top: 0;
+  flex-shrink: 0;
+  z-index: 60;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
+  transition: width 0.2s ease, transform 0.25s ease;
+}
+
+.sidebar-close {
+  display: none;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
 }
 
 .brand {
@@ -131,12 +170,16 @@ async function onSelectPlan(planId) {
   align-items: center;
   gap: 10px;
   padding: 20px 20px 24px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .brand-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  transition: opacity 0.15s ease;
 }
 
 .brand-name {
@@ -151,6 +194,8 @@ async function onSelectPlan(planId) {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .menu-item {
@@ -165,6 +210,12 @@ async function onSelectPlan(planId) {
   font-weight: 500;
   transition: all 0.15s ease;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.menu-item svg {
+  flex-shrink: 0;
 }
 
 .menu-item:hover {
@@ -197,10 +248,12 @@ async function onSelectPlan(planId) {
   margin: 12px;
   background: #f9fafb;
   border-radius: 10px;
+  white-space: nowrap;
 }
 
 .user-details {
   min-width: 0;
+  transition: opacity 0.15s ease;
 }
 
 .user-name {
@@ -215,5 +268,132 @@ async function onSelectPlan(planId) {
 .user-role {
   font-size: 11px;
   color: #9ca3af;
+}
+
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 12px 12px;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.collapse-toggle:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Estado colapsado (>=1024) */
+.sidebar-collapsed {
+  width: 76px;
+}
+
+.sidebar-collapsed .brand {
+  padding: 20px 0 24px;
+  justify-content: center;
+}
+
+.sidebar-collapsed .brand-info,
+.sidebar-collapsed .user-details {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  display: none;
+}
+
+.sidebar-collapsed .menu {
+  padding: 0 10px;
+}
+
+.sidebar-collapsed .menu-item {
+  justify-content: center;
+  padding: 10px;
+}
+
+.sidebar-collapsed .user-card {
+  justify-content: center;
+  padding: 12px 0;
+  margin: 8px;
+}
+
+.sidebar-collapsed .collapse-toggle {
+  justify-content: center;
+  padding: 9px 0;
+}
+
+.sidebar-collapsed .collapse-toggle svg {
+  transform: rotate(180deg);
+}
+
+.sidebar-collapsed .collapse-label {
+  display: none;
+}
+
+/* Modo drawer: tablet y movil (<1024) */
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100dvh;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .sidebar-close {
+    display: flex;
+  }
+
+  .collapse-toggle {
+    display: none;
+  }
+
+  .sidebar-collapsed {
+    width: 250px;
+  }
+
+  .sidebar-collapsed .brand {
+    padding: 20px 20px 24px;
+    justify-content: flex-start;
+  }
+
+  .sidebar-collapsed .brand-info,
+  .sidebar-collapsed .user-details {
+    opacity: 1;
+    width: auto;
+    display: flex;
+    overflow: visible;
+  }
+
+  .sidebar-collapsed .menu {
+    padding: 0 12px;
+  }
+
+  .sidebar-collapsed .menu-item {
+    justify-content: flex-start;
+    padding: 10px 12px;
+  }
+
+  .sidebar-collapsed .user-card {
+    justify-content: flex-start;
+    padding: 16px 20px;
+    margin: 12px;
+  }
 }
 </style>

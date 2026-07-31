@@ -98,4 +98,39 @@ const menuItems = [
 .menu-label {
   white-space: nowrap;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .settings-sidebar {
+    width: 100%;
+    position: static;
+    top: auto;
+    padding: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .settings-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar-menu {
+    flex-direction: row;
+    gap: 4px;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .sidebar-item {
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  .menu-label {
+    font-size: 12px;
+  }
+}
 </style>

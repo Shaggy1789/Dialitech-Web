@@ -113,4 +113,21 @@ function handleSave() {
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .settings-header {
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .save-btn {
+    margin-top: 0;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+}
 </style>

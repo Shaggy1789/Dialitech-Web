@@ -94,4 +94,21 @@
 .mark-btn:hover {
   background: #1d4ed8;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .alerts-header {
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .mark-btn {
+    margin-top: 0;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+}
 </style>

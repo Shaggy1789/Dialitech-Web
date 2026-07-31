@@ -1,15 +1,28 @@
 <template>
   <header class="topnavbar">
-    <div class="search-bar">
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <circle cx="8" cy="8" r="5" stroke="#9ca3af" stroke-width="1.5" />
-        <path d="M11.5 11.5L16 16" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" />
-      </svg>
-      <input
-        type="text"
-        class="search-input"
-        placeholder="Search patients, alerts, reports..."
-      />
+    <div class="left-section">
+      <button
+        class="hamburger-btn"
+        :aria-expanded="layout.sidebarOpen.value"
+        aria-label="Toggle navigation menu"
+        @click="layout.toggleSidebar()"
+      >
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M2 6h18M2 11h18M2 16h18" stroke="#374151" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      </button>
+
+      <div class="search-bar">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <circle cx="8" cy="8" r="5" stroke="#9ca3af" stroke-width="1.5" />
+          <path d="M11.5 11.5L16 16" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search patients, alerts, reports..."
+        />
+      </div>
     </div>
     <div class="right-section">
       <PlanSelector />
@@ -155,6 +168,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/authStore';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { useNotifications } from '../composables/useNotifications';
+import { useLayout } from '../composables/useLayout';
 import PlanBadge from './PlanBadge.vue';
 import PlanSelector from './PlanSelector.vue';
 import UserAvatar from './UserAvatar.vue';
@@ -162,6 +176,7 @@ import UserAvatar from './UserAvatar.vue';
 const router = useRouter();
 const authStore = useAuthStore();
 const sub = useSubscriptionStore();
+const layout = useLayout();
 const { notifications, unreadCount, hasUnread, markAllAsRead, loading } = useNotifications();
 
 const showDropdown = ref(false);
@@ -224,12 +239,40 @@ const userRoleLabel = computed(() => {
   padding: 0 28px;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+  gap: 16px;
+}
+
+.left-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.hamburger-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+  background: #e5e7eb;
 }
 
 .search-bar {
   position: relative;
   flex: 1;
   max-width: 480px;
+  min-width: 0;
 }
 
 .search-icon {
@@ -660,5 +703,64 @@ const userRoleLabel = computed(() => {
   height: 1px;
   background: #f3f4f6;
   margin: 4px 0;
+}
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .search-bar {
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 767px) {
+  .topnavbar {
+    height: 64px;
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .left-section {
+    gap: 10px;
+  }
+
+  .search-bar {
+    display: none;
+  }
+
+  .right-section {
+    gap: 10px;
+  }
+
+  .right-section > .plan-selector,
+  .user-info {
+    display: none;
+  }
+
+  .user-trigger {
+    padding: 4px;
+  }
+
+  .notification-dropdown {
+    position: fixed;
+    top: 64px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 88px);
+  }
+
+  .user-dropdown {
+    position: fixed;
+    top: 64px;
+    right: 12px;
+    width: min(300px, calc(100vw - 24px));
+    max-height: calc(100dvh - 88px);
+    overflow-y: auto;
+  }
 }
 </style>

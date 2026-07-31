@@ -39,19 +39,30 @@
       <div class="profile-fields">
         <div class="field-row">
           <label class="field-label">First Name</label>
-          <input class="field-input" v-model="form.name" :disabled="saving" />
+          <div class="field-wrap">
+            <input class="field-input" v-model="form.name" :disabled="saving" maxlength="60" />
+            <p v-if="fieldErrors.name" class="field-error">{{ fieldErrors.name }}</p>
+          </div>
         </div>
         <div class="field-row">
           <label class="field-label">Last Name</label>
-          <input class="field-input" v-model="form.lastname" :disabled="saving" />
+          <div class="field-wrap">
+            <input class="field-input" v-model="form.lastname" :disabled="saving" maxlength="60" />
+            <p v-if="fieldErrors.lastname" class="field-error">{{ fieldErrors.lastname }}</p>
+          </div>
         </div>
         <div class="field-row">
           <label class="field-label">Email</label>
-          <input class="field-input" :value="form.email" readonly />
+          <div class="field-wrap">
+            <input class="field-input" :value="form.email" readonly />
+          </div>
         </div>
         <div class="field-row">
           <label class="field-label">Phone</label>
-          <input class="field-input" v-model="form.phone" :disabled="saving" />
+          <div class="field-wrap">
+            <input class="field-input" v-model="form.phone" :disabled="saving" maxlength="20" />
+            <p v-if="fieldErrors.phone" class="field-error">{{ fieldErrors.phone }}</p>
+          </div>
         </div>
         <button class="save-profile-btn" :disabled="saving" @click="save">
           <svg v-if="saving" class="spinner" width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -69,7 +80,7 @@ import { ref } from 'vue';
 import { useProfile } from '../../../composables/useProfile';
 import SettingsSection from './SettingsSection.vue';
 
-const { form, loading, saving, error, fetch, save } = useProfile();
+const { form, fieldErrors, loading, saving, error, fetch, save } = useProfile();
 const avatarInput = ref(null);
 
 function onAvatarSelected(e) {
@@ -188,6 +199,24 @@ function onAvatarSelected(e) {
   cursor: default;
 }
 
+.field-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-wrap .field-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 0;
+}
+
 .save-profile-btn {
   display: inline-flex;
   align-items: center;
@@ -280,5 +309,27 @@ function onAvatarSelected(e) {
 
 .retry-btn:hover {
   background: #b91c1c;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+  .field-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .field-label {
+    min-width: 0;
+  }
+
+  .profile-fields {
+    max-width: none;
+    width: 100%;
+  }
+
+  .save-profile-btn {
+    width: 100%;
+  }
 }
 </style>

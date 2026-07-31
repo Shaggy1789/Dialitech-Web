@@ -83,4 +83,23 @@ defineProps({
   line-height: 1.7;
   margin: 0 0 0 32px;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .faq-section {
+    padding: 48px 16px;
+  }
+
+  .faq-title {
+    font-size: 28px;
+  }
+
+  .faq-item {
+    padding: 20px;
+  }
+
+  .faq-answer {
+    margin-left: 0;
+  }
+}
 </style>

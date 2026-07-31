@@ -1,4 +1,6 @@
 import axios from 'axios';
+import tokenService from './token.service';
+import authEvents from './authEvents';
 
 const baseURL = import.meta.env.DEV
   ? '/api/v1'
@@ -8,15 +10,28 @@ const api = axios.create({
   baseURL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 90000,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+  withCredentials: false,
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
+  const token = tokenService.getToken();
+  if (token && isAuthRequiredRequest(config)) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+function isAuthRequiredRequest(config) {
+  const url = config.url || '';
+  return !/\/auth\/(login|register|forgot-password|reset-password)/.test(url);
+}
+
+function isAuthLoginRequest(config) {
+  const url = config.url || '';
+  return /\/auth\/(login|register)/.test(url);
+}
 
 const IDEMPOTENT_METHODS = ['get', 'head', 'put', 'delete'];
 const MAX_RETRIES = 2;
@@ -25,6 +40,14 @@ const RETRY_TIMEOUT = 30000;
 function isServerUnavailable(error) {
   if (!error.response) return true;
   return error.response.status >= 500;
+}
+
+function isTransientError(error) {
+  if (error.response) {
+    const { status } = error.response;
+    return status === 401 || status === 403 || status === 404 || status === 422;
+  }
+  return false;
 }
 
 function canRetry(config) {
@@ -43,6 +66,11 @@ function backoffDelay(attempt) {
 let lastOfflineToastAt = 0;
 let lastFailedConfig = null;
 
+function showToast(type, title, message) {
+  if (!window.__toast) return;
+  window.__toast[type]?.(title, message);
+}
+
 function showServerUnavailableToast() {
   const now = Date.now();
   if (now - lastOfflineToastAt < 60000) return;
@@ -50,10 +78,7 @@ function showServerUnavailableToast() {
 
   if (!window.__toast) return;
 
-  const title = 'Server not available';
-  const message = 'Unable to reach the server. Check your connection and try again.';
-
-  window.__toast.error(title, message, {
+  window.__toast.error('Server not available', 'Unable to reach the server. Check your connection and try again.', {
     action: {
       label: 'Retry',
       onClick() {
@@ -80,11 +105,21 @@ api.interceptors.response.use(
       const { status } = error.response;
 
       if (status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        if (isAuthLoginRequest(config)) {
+          return Promise.reject(error);
         }
+        tokenService.clearAuthStorage();
+        authEvents.emit('session-expired');
+        return Promise.reject(error);
+      }
+
+      if (status === 403) {
+        authEvents.emit('forbidden');
+        return Promise.reject(error);
+      }
+
+      if (status === 404) {
+        showToast('error', 'Not found', 'The requested resource could not be found.');
         return Promise.reject(error);
       }
 
@@ -96,6 +131,10 @@ api.interceptors.response.use(
       if (isServerUnavailable(error)) {
         onFinalFailure(error, config);
       }
+      return Promise.reject(error);
+    }
+
+    if (isTransientError(error)) {
       return Promise.reject(error);
     }
 

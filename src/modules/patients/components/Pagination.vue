@@ -81,4 +81,13 @@ defineProps({
 .nav-btn {
   font-weight: 500;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .pagination {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+}
 </style>

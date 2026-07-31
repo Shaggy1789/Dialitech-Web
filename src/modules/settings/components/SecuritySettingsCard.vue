@@ -71,6 +71,7 @@
 import { ref, reactive, computed } from 'vue';
 import SettingsSection from './SettingsSection.vue';
 import { authService } from '../../../services/auth/auth.service';
+import { isStrongPassword } from '../../../utils/validators';
 
 const showForm = ref(false);
 const saving = ref(false);
@@ -83,14 +84,14 @@ const form = reactive({
 });
 
 const passwordError = computed(() => {
-  if (form.newPassword && form.newPassword.length < 8) return 'Password must be at least 8 characters';
+  if (form.newPassword && !isStrongPassword(form.newPassword)) return 'Password must be 8-128 characters without spaces';
   if (form.confirmPassword && form.newPassword !== form.confirmPassword) return 'Passwords do not match';
   return '';
 });
 
 const isValid = computed(() => {
   return form.currentPassword
-    && form.newPassword.length >= 8
+    && isStrongPassword(form.newPassword)
     && form.newPassword === form.confirmPassword;
 });
 

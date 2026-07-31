@@ -1,41 +1,32 @@
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import { PLANS, PLAN_ORDER } from '../config/plans';
-import { isModuleAvailable, isModuleLocked } from '../config/permissions';
+import permissionService, {
+  normalizePlanId,
+  canAccess,
+  isFeatureUnlocked,
+} from '../services/permission.service';
 import { subscriptionService } from '../services/settings/subscription.service';
 import { useAuthStore } from './authStore';
-
-const ALIAS_TO_BACKEND = {
-  free: 'Standard',
-  basic: 'Standard',
-  standard: 'Standard',
-  professional: 'Pro',
-  pro: 'Pro',
-  premium: 'Premium',
-  enterprise: 'Premium',
-};
-
-function normalizePlanId(id) {
-  if (!id) return 'Standard';
-  const key = String(id).toLowerCase();
-  return ALIAS_TO_BACKEND[key] || id;
-}
 
 export const useSubscriptionStore = defineStore('subscription', () => {
   const auth = useAuthStore();
 
-  const planId = ref(normalizePlanId(auth.user?.plan));
+  const planId = ref(normalizePlanId(auth.plan));
   const role = ref('caregiver');
   const changing = ref(false);
   const status = ref('Active');
 
   watch(
     () => auth.user,
-    (user) => {
-      planId.value = user?.plan ? normalizePlanId(user.plan) : 'Standard';
-    },
+    () => syncFromAuth(),
     { immediate: true },
   );
+
+  function syncFromAuth() {
+    planId.value = normalizePlanId(auth.plan);
+    role.value = permissionService.normalizeRole(auth.role);
+  }
 
   const currentPlan = computed(() => PLANS[planId.value] || PLANS.Standard);
   const isBasePlan = computed(() => planId.value === 'Standard');
@@ -80,7 +71,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   function setRole(r) {
-    role.value = (r || 'caregiver').toLowerCase();
+    role.value = permissionService.normalizeRole(r);
   }
 
   async function changePlan(newPlanId) {
@@ -93,7 +84,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     try {
       await subscriptionService.changePlan(normalized);
       auth.updateUser({ plan: normalized });
-      planId.value = normalized;
+      syncFromAuth();
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.message || err.response?.data?.title || 'Failed to change plan';
@@ -114,18 +105,11 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   function can(feature) {
-    return isModuleAvailable(planId.value, role.value, feature);
+    return canAccess(planId.value, role.value, feature);
   }
 
   function isLocked(feature) {
-    const roleConfig = {
-      patient: { restrictedFrom: ['settings', 'administration'] },
-      caregiver: { restrictedFrom: [] },
-      admin: { restrictedFrom: [] },
-    };
-    const r = roleConfig[role.value] || roleConfig.caregiver;
-    if (r.restrictedFrom.includes(feature)) return true;
-    return isModuleLocked(planId.value, feature);
+    return !isFeatureUnlocked(planId.value, feature);
   }
 
   const sidebarModules = computed(() => {
@@ -138,14 +122,14 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     return modules.map((m) => ({
       ...m,
       locked: isLocked(m.key),
-      hidden: role.value === 'patient' && m.key === 'administration',
+      hidden: role.value === 'patient' && m.key === 'settings',
     }));
   });
 
   return {
     planId, role, status, currentPlan, isBasePlan, isPaid, planName, planPrice, changing,
     availablePlans,
-    setPlan, setRole, setStatus, changePlan, refreshSubscription,
+    setPlan, setRole, setStatus, changePlan, refreshSubscription, syncFromAuth,
     can, isLocked, sidebarModules,
   };
 });

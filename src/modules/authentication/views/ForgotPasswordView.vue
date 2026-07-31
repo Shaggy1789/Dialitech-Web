@@ -269,4 +269,19 @@ async function handleSubmit() {
 .back-link:hover {
   color: #6b7280;
 }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .forgot-left {
+    display: none;
+  }
+
+  .forgot-right {
+    padding: 24px 16px;
+  }
+
+  .forgot-card {
+    padding: 28px 20px;
+  }
+}
 </style>

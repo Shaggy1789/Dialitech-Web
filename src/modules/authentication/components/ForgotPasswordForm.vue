@@ -26,6 +26,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { sanitizeEmail, isEmail } from '../../../utils/validators';
 
 defineProps({
   loading: { type: Boolean, default: false },
@@ -38,7 +39,9 @@ const email = ref('');
 
 function getPayload() {
   if (!email.value) return null;
-  return { email: email.value.trim() };
+  const clean = sanitizeEmail(email.value);
+  if (!isEmail(clean)) return null;
+  return { email: clean };
 }
 
 defineExpose({ email, getPayload });

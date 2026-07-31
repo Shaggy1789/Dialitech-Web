@@ -259,4 +259,24 @@ async function submit() {
   background: #f9fafb;
   border-color: #d1d5db;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .field-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .modal-header {
+    padding: 20px 20px 0;
+  }
+
+  .modal-body {
+    padding: 16px 20px;
+  }
+
+  .modal-footer {
+    padding: 12px 20px 20px;
+  }
+}
 </style>

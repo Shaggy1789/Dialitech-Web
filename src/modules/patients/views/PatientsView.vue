@@ -249,4 +249,37 @@ onMounted(() => {
 .add-empty-btn:hover {
   background: #1d4ed8;
 }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .patients-view {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .patients-view {
+    padding: 16px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .search-bar {
+    max-width: none;
+  }
+
+  .filters {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filter-select {
+    min-width: 0;
+    flex: 1;
+  }
+}
 </style>

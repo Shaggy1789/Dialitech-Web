@@ -143,4 +143,18 @@ const {
 .toggle.active .toggle-slider {
   transform: translateX(20px);
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .appearance-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .field-select {
+    width: 100%;
+    min-width: 0;
+  }
+}
 </style>

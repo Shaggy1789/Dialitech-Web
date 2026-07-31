@@ -21,18 +21,32 @@ function extractError(err) {
 }
 
 export const authService = {
+  /**
+   * @param {{ email: string, password: string }} data
+   * @returns {Promise<import('../types').ApiResponse>}
+   */
   login(data) {
     return api.post('/auth/login', data);
   },
 
+  /**
+   * @param {{ name: string, lastname: string, email: string, phone: string, password: string, imageUrl?: string, plan?: string }} data
+   */
   register(data) {
     return api.post('/auth/register', data);
   },
 
+  /**
+   * @returns {Promise<import('../types').ApiResponse>}
+   */
   me() {
     return api.get('/auth/me');
   },
 
+  /**
+   * @param {{ name: string, lastname: string, phone: string, imageUrl?: string }} data
+   * @returns {Promise<import('../types').ApiResponse>}
+   */
   updateProfile(data) {
     return api.put('/auth/profile', data);
   },
@@ -41,14 +55,23 @@ export const authService = {
     return api.delete('/auth/account');
   },
 
+  /**
+   * @param {{ currentPassword: string, newPassword: string }} data
+   */
   changePassword(data) {
     return api.post('/auth/change-password', data);
   },
 
+  /**
+   * @param {{ email: string }} data
+   */
   sendRecoveryCode(data) {
     return api.post('/auth/forgot-password', data);
   },
 
+  /**
+   * @param {{ email: string, code: string, newPassword: string }} data
+   */
   resetPassword(data) {
     return api.post('/auth/reset-password', data);
   },

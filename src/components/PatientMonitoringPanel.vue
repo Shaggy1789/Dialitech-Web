@@ -118,4 +118,16 @@ onMounted(loadPatients);
   background: #f9fafb;
   border-color: #9ca3af;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .patients-grid {
+    grid-template-columns: 1fr;
+    padding: 12px 16px 16px;
+  }
+
+  .panel-header {
+    padding: 16px 16px 0;
+  }
+}
 </style>

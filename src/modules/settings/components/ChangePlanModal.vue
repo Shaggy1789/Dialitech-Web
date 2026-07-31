@@ -359,4 +359,26 @@ async function confirm() {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .modal-header {
+    padding: 16px 20px 0;
+  }
+
+  .modal-body {
+    padding: 16px 20px;
+  }
+
+  .modal-footer {
+    padding: 12px 20px 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-cancel,
+  .btn-confirm {
+    flex: 1;
+    justify-content: center;
+  }
+}
 </style>

@@ -163,4 +163,30 @@ const annual = ref(false);
   color: #9ca3af;
   margin: 0;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .header-inner {
+    padding: 12px 16px;
+  }
+
+  .header-nav {
+    gap: 8px;
+  }
+
+  .nav-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .plans-footer {
+    padding: 16px;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
 </style>

@@ -1,6 +1,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { profileService } from '../services/settings/profile.service';
 import { useAuthStore } from '../stores/authStore';
+import { validateProfileForm, sanitizeString, sanitizePhone } from '../utils/validators';
 
 export function useProfile() {
   const authStore = useAuthStore();
@@ -8,6 +9,11 @@ export function useProfile() {
   const loading = ref(true);
   const error = ref('');
   const saving = ref(false);
+  const fieldErrors = reactive({
+    name: '',
+    lastname: '',
+    phone: '',
+  });
 
   const form = reactive({
     name: '',
@@ -38,15 +44,25 @@ export function useProfile() {
   }
 
   async function save() {
+    const payload = {
+      name: sanitizeString(form.name),
+      lastname: sanitizeString(form.lastname),
+      phone: sanitizePhone(form.phone),
+      imageUrl: form.imageUrl,
+    };
+
+    const errors = validateProfileForm(payload);
+    fieldErrors.name = errors.name || '';
+    fieldErrors.lastname = errors.lastname || '';
+    fieldErrors.phone = errors.phone || '';
+    if (fieldErrors.name || fieldErrors.lastname || fieldErrors.phone) {
+      return false;
+    }
+
     saving.value = true;
     error.value = '';
     try {
-      const { data } = await profileService.update({
-        name: form.name,
-        lastname: form.lastname,
-        phone: form.phone,
-        imageUrl: form.imageUrl,
-      });
+      const { data } = await profileService.update(payload);
       profile.value = data;
       authStore.updateUser(data);
       if (window.__toast) window.__toast.success('Profile updated successfully.');
@@ -63,5 +79,5 @@ export function useProfile() {
 
   onMounted(fetch);
 
-  return { profile, form, loading, saving, error, fetch, save };
+  return { profile, form, fieldErrors, loading, saving, error, fetch, save };
 }

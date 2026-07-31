@@ -208,4 +208,17 @@ function confirmDelete() {
 .retry-btn:hover {
   background: #b91c1c;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .account-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .account-label {
+    min-width: 0;
+  }
+}
 </style>

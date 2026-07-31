@@ -34,11 +34,22 @@ defineProps({
   align-items: start;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
+  .pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .pricing-section {
+    padding: 0 16px 48px;
+  }
+
   .pricing-grid {
     grid-template-columns: 1fr;
     max-width: 420px;
     margin: 0 auto;
+    gap: 20px;
   }
 }
 </style>

@@ -133,4 +133,11 @@ import SettingsSection from './SettingsSection.vue';
 .toggle.active .toggle-slider {
   transform: translateX(20px);
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .switch-row {
+    align-items: flex-start;
+  }
+}
 </style>

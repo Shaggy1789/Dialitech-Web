@@ -128,4 +128,27 @@ import { priorities, alertStatuses } from '../data/alerts.js';
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .search-bar {
+    max-width: none;
+  }
+
+  .filters {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filter-select {
+    min-width: 0;
+    flex: 1;
+  }
+}
 </style>

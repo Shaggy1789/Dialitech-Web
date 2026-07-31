@@ -12,19 +12,26 @@ import PatientsView from '../modules/patients/views/PatientsView.vue';
 import PatientDetailView from '../modules/patients/views/PatientDetailView.vue';
 import AlertsView from '../modules/alerts/views/AlertsView.vue';
 import SettingsView from '../modules/settings/views/SettingsView.vue';
+import ForbiddenView from '../pages/ForbiddenView.vue';
+import UpgradeRequiredView from '../pages/UpgradeRequiredView.vue';
+import NotFoundView from '../pages/NotFoundView.vue';
+import { PUBLIC_ROUTES, GUEST_ONLY_ROUTES, ROUTE_ACTION_DEFAULT } from '../config/security';
+import { useAuthStore } from '../stores/authStore';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
+import tokenService from '../services/token.service';
+import permissionService from '../services/permission.service';
 
 const routes = [
   {
     path: '/',
     component: PublicLayout,
     children: [
-      { path: '', name: 'home', component: Home },
-      { path: 'login', name: 'login', component: Login },
-      { path: 'register', name: 'register', component: RegisterView },
-      { path: 'plans', name: 'plans', component: PlansView },
-      { path: 'forgot-password', name: 'forgot-password', component: ForgotPasswordView },
-      { path: 'reset-password', name: 'reset-password', component: ResetPasswordView },
+      { path: '', name: 'home', component: Home, meta: { public: true } },
+      { path: 'login', name: 'login', component: Login, meta: { public: true } },
+      { path: 'register', name: 'register', component: RegisterView, meta: { public: true } },
+      { path: 'plans', name: 'plans', component: PlansView, meta: { public: true } },
+      { path: 'forgot-password', name: 'forgot-password', component: ForgotPasswordView, meta: { public: true } },
+      { path: 'reset-password', name: 'reset-password', component: ResetPasswordView, meta: { public: true } },
     ],
   },
   {
@@ -32,33 +39,53 @@ const routes = [
     component: DashboardLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'dashboard', component: DashboardView },
+      { path: '', name: 'dashboard', component: DashboardView, meta: { requiresAuth: true, module: 'dashboard' } },
     ],
   },
   {
     path: '/patients',
     component: DashboardLayout,
-    meta: { requiresAuth: true, module: 'patients' },
+    meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'patients', component: PatientsView },
-      { path: ':id', name: 'patient-detail', component: PatientDetailView },
+      { path: '', name: 'patients', component: PatientsView, meta: { requiresAuth: true, module: 'patients' } },
+      { path: ':id', name: 'patient-detail', component: PatientDetailView, meta: { requiresAuth: true, module: 'patients' } },
     ],
   },
   {
     path: '/alerts',
     component: DashboardLayout,
-    meta: { requiresAuth: true, module: 'alerts' },
+    meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'alerts', component: AlertsView },
+      { path: '', name: 'alerts', component: AlertsView, meta: { requiresAuth: true, module: 'alerts' } },
     ],
   },
   {
     path: '/settings',
     component: DashboardLayout,
-    meta: { requiresAuth: true, module: 'settings' },
+    meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'settings', component: SettingsView },
+      { path: '', name: 'settings', component: SettingsView, meta: { requiresAuth: true, module: 'settings' } },
     ],
+  },
+  {
+    path: '/forbidden',
+    component: PublicLayout,
+    children: [
+      { path: '', name: 'forbidden', component: ForbiddenView, meta: { public: true } },
+    ],
+  },
+  {
+    path: '/upgrade-required',
+    component: PublicLayout,
+    children: [
+      { path: '', name: 'upgrade-required', component: UpgradeRequiredView, meta: { public: true } },
+    ],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: NotFoundView,
+    meta: { public: true },
   },
 ];
 
@@ -68,22 +95,60 @@ const router = createRouter({
   linkActiveClass: 'active',
 });
 
-router.beforeEach((to, from) => {
-  const token = localStorage.getItem('token');
+router.beforeEach(async (to) => {
+  const auth = useAuthStore();
+  const sub = useSubscriptionStore();
 
-  if (to.meta.requiresAuth && !token) {
-    return { name: 'login' };
+  const isPublic = to.meta.public || PUBLIC_ROUTES.includes(to.name);
+
+  if (isPublic) {
+    if (auth.isAuthenticated && GUEST_ONLY_ROUTES.includes(to.name)) {
+      return { name: 'dashboard' };
+    }
+    return true;
   }
 
-  const sub = useSubscriptionStore();
-  const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-  if (storedUser?.plan) sub.setPlan(storedUser.plan);
-  if (storedUser?.role) sub.setRole(storedUser.role);
+  if (!to.meta.requiresAuth) {
+    return true;
+  }
+
+  if (!auth.isAuthenticated || !tokenService.getToken()) {
+    auth.logout();
+    return { name: 'login', query: { redirect: to.fullPath } };
+  }
+
+  const validToken = tokenService.isTokenValid(tokenService.getToken());
+  if (!validToken) {
+    auth.logout();
+    return { name: 'login', query: { redirect: to.fullPath, expired: '1' } };
+  }
+
+  if (!auth.userLoaded) {
+    const ok = await auth.refreshSession();
+    if (!ok) {
+      return { name: 'login', query: { redirect: to.fullPath } };
+    }
+  }
+
+  sub.syncFromAuth();
 
   const routeModule = to.meta.module;
-  if (to.meta.requiresAuth && routeModule && !sub.can(routeModule)) {
-    return { name: 'dashboard' };
+  if (routeModule) {
+    const action = to.meta.permission || ROUTE_ACTION_DEFAULT;
+
+    if (!permissionService.roleAllows(auth.role, routeModule)) {
+      return { name: 'forbidden' };
+    }
+
+    if (!permissionService.can(auth.plan, auth.role, action, routeModule)) {
+      if (!permissionService.hasFeature(auth.plan, routeModule)) {
+        return { name: 'upgrade-required', query: { feature: routeModule } };
+      }
+      return { name: 'forbidden' };
+    }
   }
+
+  return true;
 });
 
 export default router;

@@ -29,7 +29,7 @@ const annual = ref(false);
 }
 
 .hero-title {
-  font-size: 44px;
+  font-size: clamp(30px, 5vw, 44px);
   font-weight: 800;
   color: #111827;
   margin: 0 0 16px 0;
@@ -108,5 +108,16 @@ const annual = ref(false);
   background: #f0fdf4;
   padding: 4px 10px;
   border-radius: 6px;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+  .plans-hero {
+    padding: 104px 16px 40px;
+  }
+
+  .hero-desc {
+    font-size: 16px;
+  }
 }
 </style>

@@ -78,4 +78,14 @@ defineEmits(['delete']);
 .th-actions {
   padding-right: 24px !important;
 }
+
+@media (max-width: 767px) {
+  .patients-table thead {
+    display: none;
+  }
+
+  .table-wrapper {
+    overflow-x: visible;
+  }
+}
 </style>

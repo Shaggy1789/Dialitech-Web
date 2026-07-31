@@ -66,4 +66,22 @@ defineEmits(['add']);
 .add-btn:hover {
   background: #1d4ed8;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .patients-header {
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .add-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>

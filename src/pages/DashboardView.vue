@@ -176,4 +176,37 @@ async function onSelectPlan(planId) {
   gap: 20px;
   align-items: start;
 }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .dashboard-view {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-view {
+    padding: 16px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 479px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

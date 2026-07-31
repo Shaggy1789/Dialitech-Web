@@ -100,4 +100,16 @@ const bannerClass = computed(() => `sub-${String(props.plan).toLowerCase()}`);
 .upgrade-btn:hover {
   background: #1d4ed8;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .upgrade-btn {
+    width: 100%;
+  }
+}
 </style>

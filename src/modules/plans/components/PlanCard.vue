@@ -58,6 +58,12 @@ const displayPrice = computed(() => {
   transform: translateY(-2px);
 }
 
+@media (max-width: 767px) {
+  .plan-card {
+    padding: 28px 22px;
+  }
+}
+
 .plan-card.featured {
   border-color: #2563eb;
   box-shadow: 0 0 0 1px #2563eb, 0 8px 32px rgba(37, 99, 235, 0.1);

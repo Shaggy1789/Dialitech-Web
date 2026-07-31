@@ -273,7 +273,7 @@
 }
 
 .hero-title {
-  font-size: 48px;
+  font-size: clamp(30px, 4.5vw, 48px);
   font-weight: 800;
   color: #111827;
   line-height: 1.15;
@@ -413,7 +413,7 @@
 }
 
 .section-title {
-  font-size: 36px;
+  font-size: clamp(26px, 3.5vw, 36px);
   font-weight: 700;
   color: #111827;
   text-align: center;
@@ -488,7 +488,7 @@
 }
 
 .cta-title {
-  font-size: 36px;
+  font-size: clamp(26px, 3.5vw, 36px);
   font-weight: 700;
   color: #111827;
   margin: 0 0 12px 0;
@@ -548,14 +548,64 @@
 }
 
 @media (max-width: 600px) {
-  .features-grid {
-    grid-template-columns: 1fr;
+  .header-inner {
+    padding: 12px 16px;
   }
+
+  .nav-link-plans {
+    display: none;
+  }
+
+  .nav-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .hero {
+    padding: 108px 16px 48px;
+    gap: 40px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .hero-btn {
+    justify-content: center;
+  }
+
   .hero-stats {
     gap: 24px;
+    justify-content: space-between;
+    width: 100%;
   }
+
   .stat-number {
     font-size: 22px;
+  }
+
+  .features {
+    padding: 48px 16px;
+  }
+
+  .cta {
+    padding: 48px 16px;
+  }
+
+  .home-footer {
+    padding: 16px;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

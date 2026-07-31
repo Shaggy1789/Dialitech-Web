@@ -71,7 +71,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { PLANS, PLAN_ORDER } from '../config/plans';
-import { getUpgradeSuggestion } from '../config/permissions';
+import { getUpgradeSuggestion, normalizePlanId } from '../services/permission.service';
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -89,15 +89,16 @@ const viewingPlans = ref(false);
 
 const suggestedPlan = computed(() => {
   if (!props.feature) return null;
-  return getUpgradeSuggestion(props.currentPlan, props.feature);
+  return getUpgradeSuggestion(normalizePlanId(props.currentPlan), props.feature);
 });
 
 const upgradePlans = computed(() => {
-  const currentIndex = PLAN_ORDER.indexOf(props.currentPlan);
+  const currentPlan = normalizePlanId(props.currentPlan);
+  const currentIndex = PLAN_ORDER.indexOf(currentPlan);
   const start = currentIndex >= 0 ? currentIndex : 0;
   return PLAN_ORDER.slice(start).map((id) => {
     const plan = PLANS[id];
-    return { ...plan, isCurrent: id === props.currentPlan };
+    return { ...plan, isCurrent: id === currentPlan };
   });
 });
 </script>
@@ -309,5 +310,25 @@ const upgradePlans = computed(() => {
 .select-plan-btn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* Responsive: planes en columna en pantallas pequenas */
+@media (max-width: 767px) {
+  .modal-card {
+    padding: 24px 20px;
+  }
+
+  .plans-comparison {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .plan-card {
+    padding: 20px 18px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
 }
 </style>

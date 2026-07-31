@@ -62,4 +62,30 @@ watch(
   flex-direction: column;
   gap: 24px;
 }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .settings-view {
+    padding: 24px;
+  }
+
+  .settings-layout {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  .settings-view {
+    padding: 16px;
+  }
+
+  .settings-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .settings-content {
+    width: 100%;
+  }
+}
 </style>

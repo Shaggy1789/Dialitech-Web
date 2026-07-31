@@ -66,4 +66,22 @@ onMounted(() => {
 .error-banner button:hover {
   background: #fecaca;
 }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .alerts-view {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .alerts-view {
+    padding: 16px;
+  }
+
+  .error-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 </style>

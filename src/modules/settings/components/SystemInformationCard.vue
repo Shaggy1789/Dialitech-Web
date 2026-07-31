@@ -89,4 +89,12 @@ import SettingsSection from './SettingsSection.vue';
 .status-dot.online {
   background: #22c55e;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .sys-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
 </style>

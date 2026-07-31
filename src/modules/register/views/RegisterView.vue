@@ -85,6 +85,7 @@ async function submitRegistration() {
   if (!caregiverForm.value) return;
   authStore.clearErrors();
   const payload = caregiverForm.value.getPayload();
+  if (!payload) return;
   const result = await authStore.register(payload);
   if (result.success) {
     router.push('/login');
@@ -210,5 +211,16 @@ async function submitRegistration() {
 
 .footer-link:hover {
   text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .register-left {
+    display: none;
+  }
+
+  .register-right {
+    padding: 24px 16px;
+  }
 }
 </style>

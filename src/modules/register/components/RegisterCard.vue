@@ -14,4 +14,12 @@
   border: 1px solid #f3f4f6;
   padding: 36px 36px 32px;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .register-card {
+    padding: 24px 20px 24px;
+    border-radius: 16px;
+  }
+}
 </style>

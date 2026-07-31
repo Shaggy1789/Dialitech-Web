@@ -159,4 +159,18 @@ const initials = computed(() =>
   flex-direction: column;
   gap: 4px;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .profile-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 479px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

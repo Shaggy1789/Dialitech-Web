@@ -24,6 +24,14 @@
         </div>
       </div>
 
+      <div v-if="expiredNotice" class="expired-banner">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="10" fill="#2563eb" />
+          <path d="M10 6v4M10 13v1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span>Your session has expired. Please sign in again.</span>
+      </div>
+
       <div v-if="authStore.error && !showSuccess" class="error-banner">
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="10" fill="#dc2626" />
@@ -32,18 +40,20 @@
         <span>{{ authStore.error }}</span>
       </div>
 
-      <form class="login-form" @submit.prevent="handleLogin">
+      <form class="login-form" @submit.prevent="handleLogin" novalidate>
         <div class="field">
           <label class="field-label">Email</label>
           <input
-            v-model="email"
+            v-model.trim="email"
             type="email"
             class="field-input"
-            :class="{ 'input-error': authStore.fieldErrors?.email }"
+            :class="{ 'input-error': fieldErrors.email || authStore.fieldErrors?.email }"
             placeholder="you@example.com"
-            required
+            maxlength="254"
+            autocomplete="email"
           />
-          <p v-if="authStore.fieldErrors?.email" class="field-error">{{ authStore.fieldErrors.email }}</p>
+          <p v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email }}</p>
+          <p v-else-if="authStore.fieldErrors?.email" class="field-error">{{ authStore.fieldErrors.email }}</p>
         </div>
         <div class="field">
           <label class="field-label">Password</label>
@@ -51,11 +61,13 @@
             v-model="password"
             type="password"
             class="field-input"
-            :class="{ 'input-error': authStore.fieldErrors?.password }"
+            :class="{ 'input-error': fieldErrors.password || authStore.fieldErrors?.password }"
             placeholder="••••••••"
-            required
+            maxlength="128"
+            autocomplete="current-password"
           />
-          <p v-if="authStore.fieldErrors?.password" class="field-error">{{ authStore.fieldErrors.password }}</p>
+          <p v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</p>
+          <p v-else-if="authStore.fieldErrors?.password" class="field-error">{{ authStore.fieldErrors.password }}</p>
         </div>
         <router-link to="/forgot-password" class="forgot-link">Forgot your password?</router-link>
         <LoadingButton
@@ -81,24 +93,42 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/authStore';
 import LoadingButton from '../components/LoadingButton.vue';
+import { validateLoginForm, sanitizeEmail } from '../utils/validators';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const email = ref('');
 const password = ref('');
 const showSuccess = ref(false);
+const expiredNotice = ref(route.query.expired === '1');
+const fieldErrors = reactive({ email: '', password: '' });
 
 async function handleLogin() {
   authStore.clearErrors();
   showSuccess.value = false;
-  const result = await authStore.login(email.value, password.value);
+
+  const payload = {
+    email: sanitizeEmail(email.value),
+    password: password.value,
+  };
+
+  const errors = validateLoginForm(payload);
+  fieldErrors.email = errors.email || '';
+  fieldErrors.password = errors.password || '';
+  if (fieldErrors.email || fieldErrors.password) return;
+
+  const result = await authStore.login(payload.email, payload.password);
   if (result.success) {
     showSuccess.value = true;
-    setTimeout(() => router.push('/dashboard'), 1500);
+    const redirect = route.query.redirect && String(route.query.redirect).startsWith('/')
+      ? String(route.query.redirect)
+      : '/dashboard';
+    setTimeout(() => router.push(redirect), 1500);
   }
 }
 </script>
@@ -122,6 +152,16 @@ async function handleLogin() {
   border: 1px solid #f3f4f6;
   padding: 40px 36px;
   text-align: center;
+}
+
+@media (max-width: 479px) {
+  .login-page {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 28px 20px;
+  }
 }
 
 .login-brand {
@@ -149,6 +189,20 @@ async function handleLogin() {
   font-size: 14px;
   color: #6b7280;
   margin: 0 0 28px 0;
+}
+
+.expired-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #1e40af;
+  text-align: left;
 }
 
 .success-banner {

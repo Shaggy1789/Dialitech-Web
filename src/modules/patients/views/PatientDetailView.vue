@@ -185,4 +185,30 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
 }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .patient-detail-view {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .patient-detail-view {
+    padding: 16px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .info-label {
+    min-width: 0;
+  }
+}
 </style>

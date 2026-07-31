@@ -104,4 +104,19 @@ defineProps({
   margin: 0;
   letter-spacing: -0.5px;
 }
+
+/* Responsive */
+@media (max-width: 767px) {
+  .header-top {
+    flex-wrap: wrap;
+  }
+
+  .breadcrumb {
+    flex-wrap: wrap;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+}
 </style>
