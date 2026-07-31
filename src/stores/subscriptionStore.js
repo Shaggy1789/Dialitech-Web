@@ -1,51 +1,82 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import { PLANS } from '../config/plans';
-import { hasFeature, isModuleLocked, isModuleAvailable } from '../config/permissions';
+import { ref, computed, watch } from 'vue';
+import { PLANS, PLAN_ORDER } from '../config/plans';
+import { isModuleAvailable, isModuleLocked } from '../config/permissions';
 import { subscriptionService } from '../services/settings/subscription.service';
+import { useAuthStore } from './authStore';
+
+const ALIAS_TO_BACKEND = {
+  free: 'Standard',
+  basic: 'Standard',
+  standard: 'Standard',
+  professional: 'Pro',
+  pro: 'Pro',
+  premium: 'Premium',
+  enterprise: 'Premium',
+};
+
+function normalizePlanId(id) {
+  if (!id) return 'Standard';
+  const key = String(id).toLowerCase();
+  return ALIAS_TO_BACKEND[key] || id;
+}
 
 export const useSubscriptionStore = defineStore('subscription', () => {
-  const planId = ref('free');
+  const auth = useAuthStore();
+
+  const planId = ref(normalizePlanId(auth.user?.plan));
   const role = ref('caregiver');
   const changing = ref(false);
+  const status = ref('Active');
 
-  const currentPlan = computed(() => PLANS[planId.value] || PLANS.free);
-  const isFree = computed(() => planId.value === 'free');
-  const isPaid = computed(() => !isFree.value);
+  watch(
+    () => auth.user,
+    (user) => {
+      planId.value = user?.plan ? normalizePlanId(user.plan) : 'Standard';
+    },
+    { immediate: true },
+  );
+
+  const currentPlan = computed(() => PLANS[planId.value] || PLANS.Standard);
+  const isBasePlan = computed(() => planId.value === 'Standard');
+  const isPaid = computed(() => !isBasePlan.value);
   const planName = computed(() => currentPlan.value.name);
   const planPrice = computed(() => currentPlan.value.price);
 
   const availablePlans = computed(() => {
-    return Object.values(PLANS).map((plan) => {
-      const isCurrent = plan.id === planId.value;
-      const patientsLimit = plan.limits?.patients ?? 0;
-      const caregiversLimit = plan.limits?.caregivers ?? 0;
-      const alertsPerDay = plan.limits?.alertsPerDay ?? 0;
-
+    return PLAN_ORDER.map((id) => {
+      const plan = PLANS[id];
+      const limit = (v) => (v === -1 ? 'Unlimited' : v);
       return {
         ...plan,
-        isCurrent,
-        patientsLimit: patientsLimit === -1 ? 'Unlimited' : patientsLimit,
-        caregiversLimit: caregiversLimit === -1 ? 'Unlimited' : caregiversLimit,
-        alertsPerDay: alertsPerDay === -1 ? 'Unlimited' : alertsPerDay,
-        devicesAllowed: plan.modules?.patients?.max === -1 ? 'Unlimited' : (plan.modules?.patients?.max ?? 0),
-        reportsAvailable: plan.modules?.reports === 'available',
-        advancedMonitoring: plan.modules?.advancedMonitoring === 'available',
-        statistics: plan.modules?.statistics === 'available',
-        apiAccess: plan.modules?.apiAccess === 'available',
-        teamCollaboration: plan.modules?.administration === 'available',
+        isCurrent: plan.id === planId.value,
+        patientsLimit: limit(plan.limits.patients),
+        caregiversLimit: limit(plan.limits.caregivers),
+        devicesAllowed: limit(plan.limits.devices),
+        alertsPerDay: limit(plan.limits.alertsPerDay),
+        reportsLevel: plan.access.reports,
+        reportsAvailable: plan.access.reports !== false,
+        advancedReports: plan.access.reports === 'advanced' || plan.access.reports === 'all',
+        analytics: plan.access.analytics,
+        ai: plan.access.ai,
+        exports: plan.access.exports,
+        advancedMonitoring: plan.access.advancedMonitoring,
+        apiAccess: plan.access.apiAccess,
+        multiCaregiver: plan.access.multiCaregiver,
+        teamCollaboration: plan.access.administration,
       };
     });
   });
 
-  const PLAN_MAP = { Standard: 'free', Pro: 'professional', Premium: 'enterprise' };
-  const PLAN_MAP_REVERSE = { free: 'Standard', basic: 'Standard', professional: 'Pro', enterprise: 'Premium' };
-
   function setPlan(id) {
-    const mapped = PLAN_MAP[id] || id;
-    if (PLANS[mapped]) {
-      planId.value = mapped;
+    const normalized = normalizePlanId(id);
+    if (PLANS[normalized]) {
+      planId.value = normalized;
     }
+  }
+
+  function setStatus(value) {
+    status.value = value || 'Active';
   }
 
   function setRole(r) {
@@ -53,27 +84,19 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   async function changePlan(newPlanId) {
+    const normalized = normalizePlanId(newPlanId);
+    if (!PLANS[normalized]) {
+      return { success: false, error: 'Invalid plan.' };
+    }
+
     changing.value = true;
     try {
-      await subscriptionService.changePlan(newPlanId);
-      planId.value = newPlanId;
-      const user = JSON.parse(localStorage.getItem('user') || 'null');
-      if (user) {
-        user.plan = PLAN_MAP_REVERSE[newPlanId] || newPlanId;
-        localStorage.setItem('user', JSON.stringify(user));
-      }
+      await subscriptionService.changePlan(normalized);
+      auth.updateUser({ plan: normalized });
+      planId.value = normalized;
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.message || err.response?.data?.title || 'Failed to change plan';
-      if (err.response?.status === 404) {
-        planId.value = newPlanId;
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-        if (user) {
-          user.plan = PLAN_MAP_REVERSE[newPlanId] || newPlanId;
-          localStorage.setItem('user', JSON.stringify(user));
-        }
-        return { success: true, offline: true };
-      }
       return { success: false, error: msg };
     } finally {
       changing.value = false;
@@ -86,6 +109,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       if (data.plan) setPlan(data.plan);
       if (data.role) setRole(data.role);
     } catch {
+      // keep current local state
     }
   }
 
@@ -94,8 +118,12 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   function isLocked(feature) {
-    const roleConfig = { patient: { restrictedFrom: ['settings', 'administration'] }, caregiver: { restrictedFrom: [] }, admin: { restrictedFrom: [] } };
-    const r = roleConfig[role.value] || roleConfig.admin;
+    const roleConfig = {
+      patient: { restrictedFrom: ['settings', 'administration'] },
+      caregiver: { restrictedFrom: [] },
+      admin: { restrictedFrom: [] },
+    };
+    const r = roleConfig[role.value] || roleConfig.caregiver;
     if (r.restrictedFrom.includes(feature)) return true;
     return isModuleLocked(planId.value, feature);
   }
@@ -115,9 +143,9 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   });
 
   return {
-    planId, role, currentPlan, isFree, isPaid, planName, planPrice, changing,
+    planId, role, status, currentPlan, isBasePlan, isPaid, planName, planPrice, changing,
     availablePlans,
-    setPlan, setRole, changePlan, refreshSubscription,
+    setPlan, setRole, setStatus, changePlan, refreshSubscription,
     can, isLocked, sidebarModules,
   };
 });

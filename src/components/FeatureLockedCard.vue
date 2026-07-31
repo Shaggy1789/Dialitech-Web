@@ -3,14 +3,14 @@
     <div class="lock-icon">🔒</div>
     <h3 class="locked-title">{{ title }}</h3>
     <p class="locked-desc">{{ description }}</p>
-    <button class="view-plans-btn">View Plans</button>
+    <button class="view-plans-btn">Upgrade Required</button>
   </div>
 </template>
 
 <script setup>
 defineProps({
   title: { type: String, required: true },
-  description: { type: String, default: 'This feature is available in a higher subscription plan.' },
+  description: { type: String, default: 'This feature is available in a higher subscription plan. Upgrade to unlock it.' },
 });
 
 defineEmits(['openModal']);
@@ -60,18 +60,18 @@ defineEmits(['openModal']);
 .view-plans-btn {
   margin-top: 8px;
   padding: 8px 20px;
-  background: #f3f4f6;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .view-plans-btn:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: #ede9fe;
+  color: #6d28d9;
 }
 </style>

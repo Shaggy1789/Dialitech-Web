@@ -6,7 +6,6 @@ import Login from '../pages/Login.vue';
 import RegisterView from '../modules/register/views/RegisterView.vue';
 import PlansView from '../modules/plans/views/PlansView.vue';
 import ForgotPasswordView from '../modules/authentication/views/ForgotPasswordView.vue';
-import VerifyCodeView from '../modules/authentication/views/VerifyCodeView.vue';
 import ResetPasswordView from '../modules/authentication/views/ResetPasswordView.vue';
 import DashboardView from '../pages/DashboardView.vue';
 import PatientsView from '../modules/patients/views/PatientsView.vue';
@@ -25,7 +24,6 @@ const routes = [
       { path: 'register', name: 'register', component: RegisterView },
       { path: 'plans', name: 'plans', component: PlansView },
       { path: 'forgot-password', name: 'forgot-password', component: ForgotPasswordView },
-      { path: 'verify-code', name: 'verify-code', component: VerifyCodeView },
       { path: 'reset-password', name: 'reset-password', component: ResetPasswordView },
     ],
   },

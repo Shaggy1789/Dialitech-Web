@@ -18,9 +18,9 @@
         {{ feature }}
       </li>
     </ul>
-    <button class="plan-btn" :class="plan.featured ? 'btn-primary' : 'btn-outline'">
-      {{ plan.featured ? 'Start Free Trial' : 'Choose Plan' }}
-    </button>
+    <router-link to="/register" class="plan-btn" :class="plan.featured ? 'btn-primary' : 'btn-outline'">
+      {{ plan.featured ? 'Get Started' : 'Choose Plan' }}
+    </router-link>
   </div>
 </template>
 
@@ -148,6 +148,8 @@ const displayPrice = computed(() => {
   cursor: pointer;
   transition: all 0.15s;
   text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .btn-primary {

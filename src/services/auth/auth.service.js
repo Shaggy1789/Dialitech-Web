@@ -41,12 +41,12 @@ export const authService = {
     return api.delete('/auth/account');
   },
 
-  sendRecoveryCode(data) {
-    return api.post('/auth/forgot-password', data);
+  changePassword(data) {
+    return api.post('/auth/change-password', data);
   },
 
-  verifyCode(data) {
-    return api.post('/auth/verify-code', data);
+  sendRecoveryCode(data) {
+    return api.post('/auth/forgot-password', data);
   },
 
   resetPassword(data) {

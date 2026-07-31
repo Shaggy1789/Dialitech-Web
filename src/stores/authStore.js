@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authService } from '../services/auth/auth.service';
-import { useSubscriptionStore } from './subscriptionStore';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('user') || 'null'));
@@ -14,14 +13,31 @@ export const useAuthStore = defineStore('auth', () => {
   const userName = computed(() => user.value?.name || '');
   const userEmail = computed(() => user.value?.email || '');
   const userId = computed(() => user.value?.id || '');
+  const photo = computed(() => user.value?.imageUrl || '');
+  const fullName = computed(() => {
+    const parts = [user.value?.name, user.value?.lastname].filter(Boolean);
+    return parts.join(' ') || '';
+  });
+  const initials = computed(() => {
+    const name = fullName.value || userName.value;
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .filter(Boolean)
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  });
 
-  function initSubscription() {
-    const sub = useSubscriptionStore();
-    if (user.value?.plan) sub.setPlan(user.value.plan);
-    if (user.value?.role) sub.setRole(user.value.role);
+  function updateUser(patch) {
+    if (!user.value) return;
+    user.value = { ...user.value, ...patch };
+    localStorage.setItem('user', JSON.stringify(user.value));
   }
 
-  initSubscription();
+  function updatePhoto(url) {
+    updateUser({ imageUrl: url || '' });
+  }
 
   async function login(email, password) {
     loading.value = true;
@@ -34,7 +50,6 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = caregiver;
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(caregiver));
-      initSubscription();
       return { success: true, caregiver };
     } catch (err) {
       const parsed = authService.extractError(err);
@@ -69,7 +84,6 @@ export const useAuthStore = defineStore('auth', () => {
       const { data } = await authService.me();
       user.value = data;
       localStorage.setItem('user', JSON.stringify(data));
-      initSubscription();
     } catch {
       logout();
     }
@@ -85,14 +99,12 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = '';
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    const sub = useSubscriptionStore();
-    sub.setPlan('free');
-    sub.setRole('caregiver');
   }
 
   return {
     user, token, loading, error, fieldErrors,
     isAuthenticated, userName, userEmail, userId,
-    login, register, fetchMe, logout, initSubscription, clearErrors,
+    photo, fullName, initials,
+    login, register, fetchMe, logout, updateUser, updatePhoto, clearErrors,
   };
 });

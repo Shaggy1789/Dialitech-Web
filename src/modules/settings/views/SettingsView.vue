@@ -19,7 +19,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import SettingsHeader from '../components/SettingsHeader.vue';
 import SettingsSidebar from '../components/SettingsSidebar.vue';
 import ProfileSettings from '../components/ProfileSettings.vue';
@@ -30,7 +31,15 @@ import AppearanceSettingsCard from '../components/AppearanceSettingsCard.vue';
 import SubscriptionSettings from '../components/SubscriptionSettings.vue';
 import SystemInformationCard from '../components/SystemInformationCard.vue';
 
-const activeSection = ref('profile');
+const route = useRoute();
+const activeSection = ref(route.query.section || 'profile');
+
+watch(
+  () => route.query.section,
+  (section) => {
+    if (section) activeSection.value = section;
+  },
+);
 </script>
 
 <style scoped>

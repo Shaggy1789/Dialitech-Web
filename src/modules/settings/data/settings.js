@@ -40,19 +40,6 @@ export const settings = {
     fontSize: 'Medium',
     compactMode: false,
   },
-  subscription: {
-    plan: 'Enterprise',
-    renewalDate: '2026-12-31',
-    price: '$499/mo',
-    benefits: [
-      'Unlimited patients',
-      'Advanced analytics',
-      'Priority support 24/7',
-      'Custom integrations',
-      'HIPAA compliance',
-      'Dedicated account manager',
-    ],
-  },
   system: {
     appVersion: 'v2.1.0',
     apiVersion: 'v3.0.0',

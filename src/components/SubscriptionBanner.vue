@@ -5,7 +5,7 @@
         <strong>{{ title }}</strong>
         <p>{{ description }}</p>
       </div>
-      <button v-if="showUpgrade" class="upgrade-btn" @click="$emit('upgrade')">
+      <button v-if="showUpgrade && !isPremium" class="upgrade-btn" @click="$emit('upgrade')">
         Upgrade Plan
       </button>
     </div>
@@ -16,27 +16,27 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-  plan: { type: String, default: 'free' },
+  plan: { type: String, default: 'Standard' },
   showUpgrade: { type: Boolean, default: true },
 });
 
 defineEmits(['upgrade']);
 
+const isPremium = computed(() => props.plan === 'Premium');
+
 const title = computed(() => {
-  if (props.plan === 'free') return "You're currently using the Free Plan";
-  if (props.plan === 'basic') return 'Basic Plan';
-  if (props.plan === 'professional') return 'Professional Plan';
-  return 'Enterprise Plan';
+  if (props.plan === 'Standard') return 'You are on the Standard Plan';
+  if (props.plan === 'Pro') return 'You are on the Pro Plan';
+  return 'You are on the Premium Plan';
 });
 
 const description = computed(() => {
-  if (props.plan === 'free') return 'Upgrade to unlock all features including real-time monitoring, advanced analytics, and unlimited patients.';
-  if (props.plan === 'basic') return 'You have access to essential tools. Upgrade to Professional for advanced monitoring and analytics.';
-  if (props.plan === 'professional') return 'You have access to all features. Contact sales for Enterprise customizations.';
-  return 'You have full access to all features.';
+  if (props.plan === 'Standard') return 'Upgrade to unlock advanced monitoring, analytics, AI insights and more.';
+  if (props.plan === 'Pro') return 'You have access to advanced features. Upgrade to Premium for unlimited scale and data exports.';
+  return 'You have full access to all features with no practical limits.';
 });
 
-const bannerClass = computed(() => `sub-${props.plan}`);
+const bannerClass = computed(() => `sub-${String(props.plan).toLowerCase()}`);
 </script>
 
 <style scoped>
@@ -46,22 +46,17 @@ const bannerClass = computed(() => `sub-${props.plan}`);
   margin-bottom: 24px;
 }
 
-.sub-free {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-}
-
-.sub-basic {
+.sub-standard {
   background: #eff6ff;
   border: 1px solid #bfdbfe;
 }
 
-.sub-professional {
+.sub-pro {
   background: #eef2ff;
   border: 1px solid #c7d2fe;
 }
 
-.sub-enterprise {
+.sub-premium {
   background: #f5f3ff;
   border: 1px solid #ddd6fe;
 }

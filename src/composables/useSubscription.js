@@ -10,13 +10,17 @@ export function useSubscription() {
     if (!store.planId) return null;
     const config = store.currentPlan;
     return {
+      id: config.id,
       name: config.name,
       price: config.price === 0 ? 'Free' : `$${config.price}${config.period}`,
-      status: 'Active',
+      status: store.status,
       description: config.description,
       benefits: config.features,
       limits: config.limits,
       modules: config.modules,
+      access: config.access,
+      startDate: null,
+      endDate: null,
     };
   });
 
@@ -41,11 +45,7 @@ export function useSubscription() {
   async function changePlan(newPlanId) {
     const result = await store.changePlan(newPlanId);
     if (result.success) {
-      if (result.offline) {
-        if (window.__toast) window.__toast.success('Subscription updated successfully (offline mode).');
-      } else {
-        if (window.__toast) window.__toast.success('Subscription updated successfully.');
-      }
+      if (window.__toast) window.__toast.success('Subscription updated successfully.');
     } else {
       if (window.__toast) window.__toast.error(result.error);
     }

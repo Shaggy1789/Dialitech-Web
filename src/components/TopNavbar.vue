@@ -12,7 +12,7 @@
       />
     </div>
     <div class="right-section">
-      <PlanBadge :plan="sub.planId" />
+      <PlanSelector />
 
       <div class="notification-wrapper" ref="wrapperRef">
         <button class="notification-btn" @click="toggleDropdown">
@@ -35,7 +35,10 @@
             </div>
 
             <div class="dropdown-body">
-              <div v-if="!notifications.length" class="empty-state">
+              <div v-if="loading" class="empty-state">
+                <p class="empty-title">Loading notifications...</p>
+              </div>
+              <div v-else-if="!notifications.length" class="empty-state">
                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                   <rect x="4" y="8" width="32" height="26" rx="6" stroke="#d1d5db" stroke-width="1.5" />
                   <circle cx="20" cy="18" r="5" stroke="#d1d5db" stroke-width="1.5" />
@@ -84,12 +87,63 @@
         </Transition>
       </div>
 
-      <div class="user-menu">
-        <div class="avatar">{{ initials }}</div>
-        <div class="user-info">
-          <span class="user-name">{{ authStore.userName || 'Dr. Sarah Wilson' }}</span>
-          <span class="user-role">{{ userRoleLabel }}</span>
-        </div>
+      <div class="user-menu" ref="userMenuRef">
+        <button class="user-trigger" @click.stop="toggleUserMenu" aria-haspopup="menu">
+          <UserAvatar size="md" />
+          <div class="user-info">
+            <span class="user-name">{{ authStore.fullName || authStore.userName }}</span>
+            <span class="user-role">{{ userRoleLabel }}</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" :class="{ open: userMenuOpen }">
+            <path d="M4 6l4 4 4-4" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        <Transition name="dropdown">
+          <div v-if="userMenuOpen" class="user-dropdown" role="menu" @click.stop>
+            <div class="user-card">
+              <UserAvatar size="lg" />
+              <div class="user-card-info">
+                <p class="user-card-name">{{ authStore.fullName || authStore.userName }}</p>
+                <p class="user-card-email">{{ authStore.userEmail }}</p>
+                <PlanBadge :plan="sub.planId" />
+              </div>
+            </div>
+
+            <div class="menu-list">
+              <button class="menu-item" role="menuitem" @click="goTo('profile')">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="6.5" r="3" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M3 15.5C3 12.463 5.686 10 9 10s6 2.463 6 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                My Profile
+              </button>
+              <button class="menu-item" role="menuitem" @click="goTo('appearance')">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M9 1.5v2M9 14.5v2M16.5 9h-2M3.5 9h-2M14.03 3.97l-1.42 1.42M5.39 12.61l-1.42 1.42M14.03 14.03l-1.42-1.42M5.39 5.39L3.97 3.97" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                Settings
+              </button>
+              <button class="menu-item" role="menuitem" @click="goTo('subscription')">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M2 7h14" stroke="currentColor" stroke-width="1.5" />
+                  <circle cx="13" cy="13" r="1" fill="currentColor" />
+                </svg>
+                My Subscription
+              </button>
+              <div class="menu-divider" />
+              <button class="menu-item danger" role="menuitem" @click="logout">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M11 3H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  <path d="M13.5 12.5L16 9l-2.5-3.5M16 9H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </Transition>
       </div>
     </div>
   </header>
@@ -97,17 +151,23 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/authStore';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { useNotifications } from '../composables/useNotifications';
 import PlanBadge from './PlanBadge.vue';
+import PlanSelector from './PlanSelector.vue';
+import UserAvatar from './UserAvatar.vue';
 
+const router = useRouter();
 const authStore = useAuthStore();
 const sub = useSubscriptionStore();
-const { notifications, unreadCount, hasUnread, markAllAsRead } = useNotifications();
+const { notifications, unreadCount, hasUnread, markAllAsRead, loading } = useNotifications();
 
 const showDropdown = ref(false);
+const userMenuOpen = ref(false);
 const wrapperRef = ref(null);
+const userMenuRef = ref(null);
 
 function toggleDropdown() {
   showDropdown.value = !showDropdown.value;
@@ -116,9 +176,27 @@ function toggleDropdown() {
   }
 }
 
+function toggleUserMenu() {
+  userMenuOpen.value = !userMenuOpen.value;
+}
+
+function goTo(section) {
+  userMenuOpen.value = false;
+  router.push({ path: '/settings', query: section ? { section } : {} });
+}
+
+function logout() {
+  userMenuOpen.value = false;
+  authStore.logout();
+  router.push('/login');
+}
+
 function onClickOutside(e) {
   if (wrapperRef.value && !wrapperRef.value.contains(e.target)) {
     showDropdown.value = false;
+  }
+  if (userMenuRef.value && !userMenuRef.value.contains(e.target)) {
+    userMenuOpen.value = false;
   }
 }
 
@@ -130,18 +208,9 @@ onUnmounted(() => {
   document.removeEventListener('click', onClickOutside);
 });
 
-const initials = computed(() => {
-  return (authStore.userName || 'Dr. Sarah Wilson')
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-});
-
 const userRoleLabel = computed(() => {
   const labels = { patient: 'Patient', caregiver: 'Caregiver', admin: 'Administrator' };
-  return labels[sub.role] || 'Nephrologist';
+  return labels[sub.role] || 'Caregiver';
 });
 </script>
 
@@ -459,39 +528,137 @@ const userRoleLabel = computed(() => {
 }
 
 .user-menu {
+  position: relative;
+}
+
+.user-trigger {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
-.avatar {
-  width: 40px;
-  height: 40px;
-  background: #2563eb;
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
-  flex-shrink: 0;
+.user-trigger:hover {
+  background: #f3f4f6;
+}
+
+.user-trigger svg.open {
+  transform: rotate(180deg);
 }
 
 .user-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .user-name {
   font-size: 14px;
   font-weight: 600;
   color: #111827;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-role {
   font-size: 12px;
   color: #9ca3af;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.user-card-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.user-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-card-email {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-list {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.menu-item:hover {
+  background: #f3f4f6;
+}
+
+.menu-item.danger {
+  color: #dc2626;
+}
+
+.menu-item.danger:hover {
+  background: #fef2f2;
+}
+
+.menu-divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 4px 0;
 }
 </style>

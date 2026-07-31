@@ -4,17 +4,17 @@
 
 <script setup>
 import { computed } from 'vue';
+import { PLANS } from '../config/plans';
 
 const props = defineProps({
-  plan: { type: String, default: 'free' },
+  plan: { type: String, default: 'Standard' },
 });
 
 const planName = computed(() => {
-  const names = { free: 'Free', basic: 'Basic', professional: 'Professional', enterprise: 'Enterprise' };
-  return names[props.plan] || 'Free';
+  return PLANS[props.plan]?.name || 'Standard';
 });
 
-const planClass = computed(() => `plan-${props.plan}`);
+const planClass = computed(() => `plan-${String(props.plan).toLowerCase()}`);
 </script>
 
 <style scoped>
@@ -27,24 +27,20 @@ const planClass = computed(() => `plan-${props.plan}`);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
-.plan-free {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.plan-basic {
+.plan-standard {
   background: #dbeafe;
   color: #2563eb;
 }
 
-.plan-professional {
+.plan-pro {
   background: #e0e7ff;
   color: #4f46e5;
 }
 
-.plan-enterprise {
+.plan-premium {
   background: #f3e8ff;
   color: #7c3aed;
 }

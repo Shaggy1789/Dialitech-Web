@@ -1,19 +1,23 @@
 <template>
   <form class="forgot-form" @submit.prevent="$emit('submit')">
-    <RecoveryMethodSelector v-model="method" />
-
-    <RecoveryInput
-      v-if="method"
-      :method="method"
-      v-model="value"
-    />
+    <div class="field">
+      <label class="field-label">Email Address</label>
+      <input
+        v-model="email"
+        type="email"
+        class="field-input"
+        placeholder="you@example.com"
+        required
+        autocomplete="email"
+      />
+    </div>
 
     <p v-if="error" class="error-msg">{{ error }}</p>
 
     <button
       type="submit"
       class="submit-btn"
-      :disabled="!method || !value || loading"
+      :disabled="!email || loading"
     >
       {{ loading ? 'Sending...' : 'Send Recovery Code' }}
     </button>
@@ -22,8 +26,6 @@
 
 <script setup>
 import { ref } from 'vue';
-import RecoveryMethodSelector from './RecoveryMethodSelector.vue';
-import RecoveryInput from './RecoveryInput.vue';
 
 defineProps({
   loading: { type: Boolean, default: false },
@@ -32,15 +34,14 @@ defineProps({
 
 const emit = defineEmits(['submit']);
 
-const method = ref('');
-const value = ref('');
+const email = ref('');
 
 function getPayload() {
-  if (!method.value) return null;
-  return { method: method.value, value: value.value };
+  if (!email.value) return null;
+  return { email: email.value.trim() };
 }
 
-defineExpose({ method, value, getPayload });
+defineExpose({ email, getPayload });
 </script>
 
 <style scoped>
@@ -49,6 +50,35 @@ defineExpose({ method, value, getPayload });
   flex-direction: column;
   gap: 20px;
   text-align: left;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.field-input {
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #374151;
+  background: #f9fafb;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background: #ffffff;
 }
 
 .error-msg {
@@ -70,7 +100,7 @@ defineExpose({ method, value, getPayload });
   margin-top: 4px;
 }
 
-.submit-btn:hover {
+.submit-btn:hover:not(:disabled) {
   background: #1d4ed8;
 }
 

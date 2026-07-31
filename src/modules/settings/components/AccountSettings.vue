@@ -15,26 +15,40 @@
       <span>{{ error }}</span>
       <button class="retry-btn" @click="fetch">Retry</button>
     </div>
-    <div v-else class="account-grid">
-      <div class="account-row">
-        <span class="account-label">Name</span>
-        <span class="account-value">{{ account.name }}</span>
+    <div v-else class="account-wrap">
+      <div class="account-grid">
+        <div class="account-row">
+          <span class="account-label">Name</span>
+          <span class="account-value">{{ account.name }} {{ account.lastname }}</span>
+        </div>
+        <div class="account-row">
+          <span class="account-label">Email</span>
+          <span class="account-value">{{ account.email }}</span>
+        </div>
+        <div class="account-row">
+          <span class="account-label">Phone</span>
+          <span class="account-value">{{ account.phone || '—' }}</span>
+        </div>
+        <div class="account-row">
+          <span class="account-label">Role</span>
+          <span class="account-value">
+            <RoleBadge :role="account.role" />
+          </span>
+        </div>
+        <div class="account-row">
+          <span class="account-label">Status</span>
+          <span class="account-value">
+            <UserStatusBadge :status="account.status" />
+          </span>
+        </div>
       </div>
-      <div class="account-row">
-        <span class="account-label">Email</span>
-        <span class="account-value">{{ account.email }}</span>
-      </div>
-      <div class="account-row">
-        <span class="account-label">Role</span>
-        <span class="account-value">
-          <RoleBadge :role="account.role" />
-        </span>
-      </div>
-      <div class="account-row">
-        <span class="account-label">Status</span>
-        <span class="account-value">
-          <UserStatusBadge :status="account.status" />
-        </span>
+
+      <div class="danger-zone">
+        <h4 class="danger-title">Danger Zone</h4>
+        <p class="danger-desc">Permanently deletes your account and all associated patients, devices and alerts. This action cannot be undone.</p>
+        <button class="danger-btn" :disabled="deleting" @click="confirmDelete">
+          {{ deleting ? 'Deleting...' : 'Delete Account' }}
+        </button>
       </div>
     </div>
   </SettingsSection>
@@ -46,10 +60,21 @@ import SettingsSection from './SettingsSection.vue';
 import RoleBadge from '../../user-management/components/RoleBadge.vue';
 import UserStatusBadge from '../../user-management/components/UserStatusBadge.vue';
 
-const { account, loading, error, fetch } = useAccount();
+const { account, loading, error, deleting, fetch, deleteAccount } = useAccount();
+
+function confirmDelete() {
+  if (!window.confirm('Are you sure you want to permanently delete your account? This will remove all of your data.')) return;
+  deleteAccount();
+}
 </script>
 
 <style scoped>
+.account-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .account-grid {
   display: flex;
   flex-direction: column;
@@ -77,6 +102,49 @@ const { account, loading, error, fetch } = useAccount();
   font-size: 14px;
   font-weight: 600;
   color: #111827;
+}
+
+.danger-zone {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.danger-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #b91c1c;
+  margin: 0 0 6px;
+}
+
+.danger-desc {
+  font-size: 13px;
+  color: #7f1d1d;
+  margin: 0 0 16px;
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.danger-btn {
+  padding: 10px 20px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.danger-btn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.danger-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .skeleton-grid {

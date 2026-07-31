@@ -50,7 +50,7 @@
         </div>
 
         <h1 class="forgot-title">Forgot Password</h1>
-        <p class="forgot-subtitle">Enter your email address or phone number associated with your account and we'll help you recover your password.</p>
+        <p class="forgot-subtitle">Enter the email address associated with your account and we'll send you a recovery code.</p>
 
         <p v-if="error" class="error-msg">{{ error }}</p>
         <p v-if="successMsg" class="success-msg">{{ successMsg }}</p>
@@ -98,7 +98,7 @@ async function handleSubmit() {
   try {
     await authService.sendRecoveryCode(payload);
     successMsg.value = 'Recovery code sent successfully. Redirecting...';
-    setTimeout(() => router.push('/verify-code'), 1500);
+    setTimeout(() => router.push('/reset-password'), 1500);
   } catch (err) {
     error.value = err.response?.data?.message || err.message || 'Failed to send recovery code. Please try again.';
   } finally {

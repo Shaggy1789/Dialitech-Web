@@ -1,30 +1,31 @@
-import { PLANS, ROLES } from './plans';
+import { PLANS, ROLES, PLAN_ORDER } from './plans';
+
+const FALLBACK_PLAN = 'Standard';
 
 export function getPlanConfig(planId) {
-  return PLANS[planId] || PLANS.free;
+  return PLANS[planId] || PLANS[FALLBACK_PLAN];
 }
 
 export function getRoleConfig(role) {
   const normalized = (role || '').toLowerCase();
-  return ROLES[normalized] || ROLES.admin;
+  return ROLES[normalized] || ROLES.caregiver;
+}
+
+function moduleStatus(module) {
+  if (typeof module === 'string') return module;
+  if (module && typeof module === 'object') return module.status || 'locked';
+  return 'locked';
 }
 
 export function hasFeature(planId, feature) {
   const plan = getPlanConfig(planId);
   const module = plan.modules[feature];
   if (!module) return false;
-  if (typeof module === 'string') return module === 'available';
-  if (typeof module === 'object') return module.status === 'available';
-  return false;
+  return moduleStatus(module) !== 'locked';
 }
 
 export function isModuleLocked(planId, feature) {
-  const plan = getPlanConfig(planId);
-  const module = plan.modules[feature];
-  if (!module) return true;
-  if (typeof module === 'string') return module === 'locked';
-  if (typeof module === 'object') return module.status === 'locked';
-  return true;
+  return !hasFeature(planId, feature);
 }
 
 export function isModuleAvailable(planId, role, moduleName) {
@@ -48,19 +49,25 @@ export function canAccessRoute(planId, role, routeName) {
 }
 
 export function getPatientLimit(planId) {
+  return getPlanConfig(planId).limits.patients;
+}
+
+export function isFeatureUnlocked(planId, feature) {
   const plan = getPlanConfig(planId);
-  return plan.limits.patients;
+  if (Object.prototype.hasOwnProperty.call(plan.access, feature)) {
+    return plan.access[feature] !== false;
+  }
+  return hasFeature(planId, feature);
 }
 
 export function getUpgradeSuggestion(planId, feature) {
-  const planOrder = ['free', 'basic', 'professional', 'enterprise'];
-  const currentIndex = planOrder.indexOf(planId);
-  for (let i = currentIndex + 1; i < planOrder.length; i++) {
-    const candidate = PLANS[planOrder[i]];
-    const module = candidate.modules[feature];
-    if (module && (module === 'available' || module?.status === 'available')) {
+  const currentIndex = PLAN_ORDER.indexOf(planId);
+  const start = currentIndex >= 0 ? currentIndex + 1 : 0;
+  for (let i = start; i < PLAN_ORDER.length; i++) {
+    const candidate = PLANS[PLAN_ORDER[i]];
+    if (isFeatureUnlocked(candidate.id, feature)) {
       return candidate;
     }
   }
-  return PLANS.enterprise;
+  return PLANS[PLAN_ORDER[PLAN_ORDER.length - 1]];
 }

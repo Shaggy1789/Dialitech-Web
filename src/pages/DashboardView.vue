@@ -102,9 +102,10 @@ onMounted(() => {
   loadAlerts();
 });
 
-function onSelectPlan(planId) {
-  sub.setPlan(planId);
+async function onSelectPlan(planId) {
   showModal.value = false;
+  const { success } = await sub.changePlan(planId);
+  if (!success) showModal.value = true;
 }
 </script>
 

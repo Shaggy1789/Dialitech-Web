@@ -5,7 +5,7 @@ export const subscriptionService = {
     return api.get('/auth/me');
   },
 
-  changePlan(planId) {
-    return api.put('/subscription/plan', { planId });
+  changePlan(plan) {
+    return api.put('/auth/plan', { plan });
   },
 };

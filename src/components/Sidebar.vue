@@ -61,9 +61,9 @@
       </template>
     </nav>
     <div class="user-card">
-      <div class="avatar">{{ initials }}</div>
+      <UserAvatar size="sm" />
       <div class="user-details">
-        <p class="user-name">{{ authStore.userName || 'Dr. Sarah Wilson' }}</p>
+        <p class="user-name">{{ authStore.fullName || authStore.userName }}</p>
         <p class="user-role">{{ userRoleLabel }}</p>
       </div>
     </div>
@@ -82,6 +82,7 @@ import { ref, computed } from 'vue';
 import { useAuthStore } from '../stores/authStore';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import PlanBadge from './PlanBadge.vue';
+import UserAvatar from './UserAvatar.vue';
 import UpgradePlanModal from './UpgradePlanModal.vue';
 
 const authStore = useAuthStore();
@@ -92,28 +93,23 @@ const visibleModules = computed(() => {
   return sub.sidebarModules.filter((m) => !m.hidden);
 });
 
-const initials = computed(() => {
-  const name = authStore.userName || 'Dr. Sarah Wilson';
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-});
-
 const userRoleLabel = computed(() => {
   const labels = { patient: 'Patient', caregiver: 'Caregiver', admin: 'Administrator' };
-  return labels[sub.role] || 'Nephrologist';
+  return labels[sub.role] || 'Caregiver';
 });
 
 function onLockedClick() {
   showUpgradeModal.value = true;
 }
 
-function onSelectPlan(planId) {
-  sub.setPlan(planId);
+async function onSelectPlan(planId) {
   showUpgradeModal.value = false;
+  const result = await sub.changePlan(planId);
+  if (result.success) {
+    if (window.__toast) window.__toast.success('Subscription updated successfully.');
+  } else if (window.__toast) {
+    window.__toast.error(result.error);
+  }
 }
 </script>
 
@@ -201,20 +197,6 @@ function onSelectPlan(planId) {
   margin: 12px;
   background: #f9fafb;
   border-radius: 10px;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  background: #2563eb;
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  flex-shrink: 0;
 }
 
 .user-details {

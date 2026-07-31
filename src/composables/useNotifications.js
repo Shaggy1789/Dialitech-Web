@@ -24,22 +24,12 @@ export function useNotifications() {
         date: a.createdAt ? a.createdAt.split('T')[0] : '',
         read: a.isRead || false,
       }));
-    } catch {
-      seedMockNotifications();
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data?.title || 'Failed to load notifications';
+      if (window.__toast) window.__toast.error(msg);
     } finally {
       loading.value = false;
     }
-  }
-
-  function seedMockNotifications() {
-    if (notifications.value.length) return;
-    notifications.value = [
-      { id: 'm1', icon: 'critical', title: 'Critical Alert', description: 'Robert Smith - Blood pressure significantly elevated (180/110 mmHg)', time: '10:42 AM', date: '2026-07-23', read: false },
-      { id: 'm2', icon: 'warning', title: 'Missed Session', description: 'Maria Garcia missed scheduled dialysis without notification', time: '09:15 AM', date: '2026-07-23', read: false },
-      { id: 'm3', icon: 'info', title: 'Lab Result', description: 'James Johnson - Potassium levels elevated (5.4 mEq/L)', time: '04:30 PM', date: '2026-07-22', read: false },
-      { id: 'm4', icon: 'critical', title: 'Equipment Issue', description: 'Dialysis machine pressure irregularity - maintenance needed', time: '02:15 PM', date: '2026-07-22', read: true },
-      { id: 'm5', icon: 'info', title: 'Medication Reminder', description: 'Linda Davis - Prescription renewal due for Erythropoietin', time: '11:00 AM', date: '2026-07-22', read: true },
-    ];
   }
 
   function markAllAsRead() {

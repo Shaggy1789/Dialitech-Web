@@ -95,24 +95,37 @@ const currentPlanConfig = computed(() => store.currentPlan);
 const planFeatures = computed(() => {
   const currentMods = currentPlanConfig.value?.modules || {};
   const newMods = props.newPlan?.modules || {};
+  const currentAccess = currentPlanConfig.value?.access || {};
+  const newAccess = props.newPlan?.access || {};
 
   const featureList = [
-    { label: 'Dashboard', key: 'dashboard' },
-    { label: 'Patients', key: 'patients' },
-    { label: 'Alerts', key: 'alerts' },
-    { label: 'Reports', key: 'reports' },
-    { label: 'Statistics', key: 'statistics' },
-    { label: 'Settings', key: 'settings' },
-    { label: 'Administration', key: 'administration' },
-    { label: 'Advanced Monitoring', key: 'advancedMonitoring' },
-    { label: 'API Access', key: 'apiAccess' },
+    { label: 'Dashboard', key: 'dashboard', type: 'module' },
+    { label: 'Patients', key: 'patients', type: 'module' },
+    { label: 'Alerts', key: 'alerts', type: 'module' },
+    { label: 'Reports', key: 'reports', type: 'module' },
+    { label: 'Analytics', key: 'statistics', type: 'module' },
+    { label: 'Settings', key: 'settings', type: 'module' },
+    { label: 'Administration', key: 'administration', type: 'module' },
+    { label: 'Advanced Monitoring', key: 'advancedMonitoring', type: 'module' },
+    { label: 'API Access', key: 'apiAccess', type: 'module' },
+    { label: 'AI Insights', key: 'ai', type: 'access' },
+    { label: 'Data Exports', key: 'exports', type: 'access' },
+    { label: 'Multi-caregiver', key: 'multiCaregiver', type: 'access' },
   ];
 
   return featureList.map((f) => {
-    const currentMod = currentMods[f.key];
-    const currentAvail = currentMod === 'available' || currentMod?.status === 'available';
-    const newMod = newMods[f.key];
-    const newAvail = newMod === 'available' || newMod?.status === 'available';
+    const currentAvail = f.type === 'access'
+      ? currentAccess[f.key] === true
+      : (() => {
+          const m = currentMods[f.key];
+          return m === 'available' || m?.status === 'available';
+        })();
+    const newAvail = f.type === 'access'
+      ? newAccess[f.key] === true
+      : (() => {
+          const m = newMods[f.key];
+          return m === 'available' || m?.status === 'available';
+        })();
     return { label: f.label, current: currentAvail, newPlan: newAvail };
   });
 });
@@ -122,11 +135,7 @@ async function confirm() {
   try {
     const result = await store.changePlan(props.newPlan.id);
     if (result.success) {
-      if (result.offline) {
-        if (window.__toast) window.__toast.success('Subscription updated successfully (offline mode).');
-      } else {
-        if (window.__toast) window.__toast.success('Subscription updated successfully.');
-      }
+      if (window.__toast) window.__toast.success('Subscription updated successfully.');
       emit('changed');
       emit('close');
     } else {

@@ -32,7 +32,7 @@
           </svg>
         </div>
         <h4 class="no-plan-title">No Active Subscription</h4>
-        <p class="no-plan-desc">You don't currently have an active plan. Subscribe to unlock all features.</p>
+        <p class="no-plan-desc">You don't currently have an active plan. Choose a plan to unlock all features.</p>
         <button class="view-plans-btn" @click="scrollToPlans">Choose a Plan</button>
       </div>
     </template>
@@ -40,11 +40,26 @@
     <template v-else>
       <div class="current-plan-card">
         <div class="current-plan-header">
-          <div>
+          <div class="current-plan-title">
             <span class="plan-badge" :class="planClass">{{ plan.name }}</span>
             <span class="status-badge">ACTIVE</span>
           </div>
           <div class="plan-price-display">{{ plan.price }}</div>
+        </div>
+
+        <div class="current-plan-dates">
+          <div class="date-block">
+            <span class="date-label">Start Date</span>
+            <span class="date-value">{{ plan.startDate || '—' }}</span>
+          </div>
+          <div class="date-block">
+            <span class="date-label">Expiration Date</span>
+            <span class="date-value">{{ plan.endDate || '—' }}</span>
+          </div>
+          <div class="date-block">
+            <span class="date-label">Status</span>
+            <span class="date-value">{{ plan.status }}</span>
+          </div>
         </div>
 
         <div class="current-plan-details">
@@ -59,6 +74,10 @@
           <div class="detail-row">
             <span class="detail-label">Devices</span>
             <span class="detail-value">{{ devicesLabel }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Alerts / day</span>
+            <span class="detail-value">{{ alertsLabel }}</span>
           </div>
         </div>
 
@@ -110,30 +129,42 @@
 
             <div class="plan-limits">
               <div class="limit-row">
-                <span class="limit-label">Patients</span>
+                <span class="limit-label">Max Patients</span>
                 <span class="limit-value">{{ p.patientsLimit }}</span>
               </div>
               <div class="limit-row">
-                <span class="limit-label">Caregivers</span>
+                <span class="limit-label">Max Caregivers</span>
                 <span class="limit-value">{{ p.caregiversLimit }}</span>
               </div>
               <div class="limit-row">
-                <span class="limit-label">Devices</span>
+                <span class="limit-label">Max Devices</span>
                 <span class="limit-value">{{ p.devicesAllowed }}</span>
               </div>
               <div class="limit-row">
+                <span class="limit-label">Alerts / day</span>
+                <span class="limit-value">{{ p.alertsPerDay }}</span>
+              </div>
+              <div class="limit-row">
                 <span class="limit-label">Reports</span>
-                <span class="limit-value">
-                  <svg v-if="p.reportsAvailable" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>
-                  <svg v-else width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <span class="limit-value feature-check" :class="{ 'feature-no': !p.reportsAvailable }">
+                  {{ p.reportsLevel === 'basic' ? 'Basic' : p.advancedReports ? 'Advanced' : '—' }}
                 </span>
               </div>
               <div class="limit-row">
-                <span class="limit-label">API Access</span>
-                <span class="limit-value">
-                  <svg v-if="p.apiAccess" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg>
-                  <svg v-else width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round"/></svg>
-                </span>
+                <span class="limit-label">Analytics</span>
+                <span class="limit-value">{{ yesNo(p.analytics) }}</span>
+              </div>
+              <div class="limit-row">
+                <span class="limit-label">AI Insights</span>
+                <span class="limit-value">{{ yesNo(p.ai) }}</span>
+              </div>
+              <div class="limit-row">
+                <span class="limit-label">Data Exports</span>
+                <span class="limit-value">{{ yesNo(p.exports) }}</span>
+              </div>
+              <div class="limit-row">
+                <span class="limit-label">Multi-caregiver</span>
+                <span class="limit-value">{{ yesNo(p.multiCaregiver) }}</span>
               </div>
             </div>
 
@@ -175,27 +206,22 @@ const showChangeModal = ref(false);
 const selectedPlan = ref(null);
 
 const planClass = computed(() => {
-  if (!plan.value) return 'basic';
-  const name = plan.value.name.toLowerCase();
-  if (name === 'enterprise') return 'enterprise';
-  if (name === 'professional') return 'professional';
-  return 'basic';
+  if (!plan.value) return 'standard';
+  return String(plan.value.id).toLowerCase();
 });
 
-const patientsLabel = computed(() => {
-  const l = plan.value?.limits?.patients;
-  return l === -1 ? 'Unlimited' : l;
-});
+function formatLimit(v) {
+  return v === -1 || v === 'Unlimited' ? 'Unlimited' : v;
+}
 
-const caregiversLabel = computed(() => {
-  const l = plan.value?.limits?.caregivers;
-  return l === -1 ? 'Unlimited' : l;
-});
+const patientsLabel = computed(() => formatLimit(plan.value?.limits?.patients));
+const caregiversLabel = computed(() => formatLimit(plan.value?.limits?.caregivers));
+const devicesLabel = computed(() => formatLimit(plan.value?.limits?.devices));
+const alertsLabel = computed(() => formatLimit(plan.value?.limits?.alertsPerDay));
 
-const devicesLabel = computed(() => {
-  const max = plan.value?.modules?.patients?.max;
-  return max === -1 ? 'Unlimited' : max ?? 'N/A';
-});
+function yesNo(v) {
+  return v ? 'Yes' : 'No';
+}
 
 function openChangeModal(p) {
   selectedPlan.value = p;
@@ -213,12 +239,6 @@ function scrollToPlans() {
 </script>
 
 <style scoped>
-.subscription-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 .plan-badge {
   display: inline-flex;
   align-items: center;
@@ -232,19 +252,19 @@ function scrollToPlans() {
   width: fit-content;
 }
 
-.plan-badge.enterprise {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.plan-badge.professional {
+.plan-badge.standard {
   background: #dbeafe;
   color: #2563eb;
 }
 
-.plan-badge.basic {
-  background: #e5e7eb;
-  color: #6b7280;
+.plan-badge.pro {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.plan-badge.premium {
+  background: #f3e8ff;
+  color: #7c3aed;
 }
 
 .status-badge {
@@ -279,6 +299,34 @@ function scrollToPlans() {
   font-size: 22px;
   font-weight: 700;
   color: #059669;
+}
+
+.current-plan-dates {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.date-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.date-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.date-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
 }
 
 .current-plan-details {

@@ -145,7 +145,7 @@
     <section class="cta">
       <div class="cta-inner">
         <h2 class="cta-title">Ready to Transform Your Dialysis Care?</h2>
-        <p class="cta-desc">Join hundreds of healthcare professionals who trust DiaMonitor for patient management.</p>
+        <p class="cta-desc">Trusted by healthcare professionals for modern dialysis patient management.</p>
         <router-link to="/register" class="hero-btn btn-primary btn-lg">Get Started Free</router-link>
       </div>
     </section>

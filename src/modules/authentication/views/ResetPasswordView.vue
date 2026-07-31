@@ -33,7 +33,7 @@
           </svg>
         </div>
         <h2 class="left-title">Reset Your<br />Password</h2>
-        <p class="left-desc">Create a new password for your account. Make sure it's strong and unique.</p>
+        <p class="left-desc">Enter the recovery code and create a new password for your account.</p>
       </div>
     </div>
 
@@ -50,12 +50,34 @@
         </div>
 
         <h1 class="forgot-title">Reset Password</h1>
-        <p class="forgot-subtitle">Enter your new password below.</p>
+        <p class="forgot-subtitle">We sent a 6-digit code to your email. Enter it with your new password below.</p>
 
         <p v-if="error" class="error-msg">{{ error }}</p>
         <p v-if="successMsg" class="success-msg">{{ successMsg }}</p>
 
         <form class="reset-form" @submit.prevent="handleReset">
+          <div class="field">
+            <label class="field-label">Email Address</label>
+            <input
+              v-model="email"
+              type="email"
+              class="field-input"
+              placeholder="you@example.com"
+              required
+              autocomplete="email"
+            />
+          </div>
+          <div class="field">
+            <label class="field-label">Recovery Code</label>
+            <input
+              v-model="code"
+              type="text"
+              class="field-input"
+              placeholder="000000"
+              maxlength="6"
+              required
+            />
+          </div>
           <div class="field">
             <label class="field-label">New Password</label>
             <input
@@ -87,11 +109,11 @@
         </form>
 
         <div class="forgot-footer">
-          <router-link to="/login" class="back-link">
+          <router-link to="/forgot-password" class="back-link">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M10 3L5 8L10 13" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            Back to Login
+            Back to Forgot Password
           </router-link>
         </div>
       </div>
@@ -105,6 +127,8 @@ import { useRouter } from 'vue-router';
 import { authService } from '../../../services/auth/auth.service';
 
 const router = useRouter();
+const email = ref('');
+const code = ref('');
 const newPassword = ref('');
 const confirmPassword = ref('');
 const loading = ref(false);
@@ -119,7 +143,10 @@ const passwordError = computed(() => {
 });
 
 const isValid = computed(() => {
-  return newPassword.value.length >= 8 && newPassword.value === confirmPassword.value;
+  return email.value
+    && code.value.length === 6
+    && newPassword.value.length >= 8
+    && newPassword.value === confirmPassword.value;
 });
 
 async function handleReset() {
@@ -131,13 +158,14 @@ async function handleReset() {
 
   try {
     await authService.resetPassword({
+      email: email.value.trim(),
+      code: code.value,
       newPassword: newPassword.value,
-      confirmPassword: confirmPassword.value,
     });
     successMsg.value = 'Password reset successfully. Redirecting to login...';
     setTimeout(() => router.push('/login'), 2000);
   } catch (err) {
-    error.value = err.response?.data?.message || err.message || 'Failed to reset password. Please try again.';
+    error.value = err.response?.data?.message || err.response?.data?.error?.message || err.message || 'Failed to reset password. Please try again.';
   } finally {
     loading.value = false;
   }
@@ -344,7 +372,7 @@ async function handleReset() {
   margin-top: 4px;
 }
 
-.submit-btn:hover {
+.submit-btn:hover:not(:disabled) {
   background: #1d4ed8;
 }
 
