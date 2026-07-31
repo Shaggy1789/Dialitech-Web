@@ -4,7 +4,11 @@
       <h2 class="panel-title">Critical Alerts</h2>
       <router-link to="/alerts" class="view-all-btn">View All</router-link>
     </div>
-    <div v-if="alerts.length" class="alerts-list">
+    <div v-if="alertStore.error && !alerts.length" class="panel-error">
+      <p>Unable to load alerts. The server may be unavailable.</p>
+      <button class="retry-btn" @click="alertStore.fetchAll">Retry</button>
+    </div>
+    <div v-else-if="alerts.length" class="alerts-list">
       <CriticalAlertCard
         v-for="alert in alerts"
         :key="alert.id"
@@ -89,5 +93,33 @@ onMounted(() => {
   text-align: center;
   color: #9ca3af;
   font-size: 14px;
+}
+
+.panel-error {
+  padding: 32px 20px;
+  text-align: center;
+  color: #dc2626;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.retry-btn {
+  padding: 6px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.retry-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 </style>

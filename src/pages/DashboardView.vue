@@ -10,6 +10,11 @@
       <p class="page-subtitle">Real-time monitoring overview</p>
     </header>
 
+    <div v-if="summaryError" class="error-banner">
+      <span>Unable to load dashboard data. The server may be unavailable.</span>
+      <button @click="loadSummary">Retry</button>
+    </div>
+
     <div class="kpi-grid">
       <PermissionWrapper feature="dashboard" @open-modal="showModal = true">
         <StatsCard title="Patients Monitored" :value="`${patientCount} / ${patientLimit}`" variant="blue" />
@@ -66,6 +71,7 @@ const alertStore = useAlertStore();
 const showModal = ref(false);
 const patientCount = ref(0);
 const criticalAlertsCount = ref(0);
+const summaryError = ref(false);
 
 const patientLimit = computed(() => {
   const plan = sub.currentPlan;
@@ -74,17 +80,26 @@ const patientLimit = computed(() => {
   return '--';
 });
 
-onMounted(async () => {
+async function loadSummary() {
+  summaryError.value = false;
   try {
     const { data } = await dashboardService.getSummary();
     patientCount.value = data?.totalPatients ?? 0;
     criticalAlertsCount.value = data?.activeAlerts ?? 0;
   } catch {
-    patientCount.value = 0;
+    summaryError.value = true;
   }
+}
+
+async function loadAlerts() {
   if (authStore.userId) {
     await alertStore.fetchAll();
   }
+}
+
+onMounted(() => {
+  loadSummary();
+  loadAlerts();
 });
 
 function onSelectPlan(planId) {
@@ -102,6 +117,35 @@ function onSelectPlan(planId) {
 
 .page-header {
   margin-bottom: 28px;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.error-banner button {
+  padding: 6px 14px;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.error-banner button:hover {
+  background: #fecaca;
 }
 
 .page-title {

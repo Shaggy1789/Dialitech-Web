@@ -24,6 +24,9 @@
         <div class="toast-body">
           <p class="toast-title">{{ t.title }}</p>
           <p v-if="t.message" class="toast-message">{{ t.message }}</p>
+          <button v-if="t.action" class="toast-action" @click="onAction(t)">
+            {{ t.action.label }}
+          </button>
         </div>
         <button class="toast-close" @click="remove(t.id)">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -41,12 +44,20 @@ import { ref } from 'vue';
 const toasts = ref([]);
 let nextId = 0;
 
-function add(type, title, message, duration = 5000) {
+function add(type, title, message, options = {}) {
+  const { duration = 5000, action } = options;
   const id = ++nextId;
-  toasts.value.push({ id, type, title, message });
+  toasts.value.push({ id, type, title, message, action });
   if (duration > 0) {
     setTimeout(() => remove(id), duration);
   }
+}
+
+function onAction(t) {
+  if (t.action?.onClick) {
+    t.action.onClick();
+  }
+  remove(t.id);
 }
 
 function remove(id) {
@@ -101,6 +112,23 @@ defineExpose({ add, remove });
   font-size: 13px;
   color: #6b7280;
   margin: 2px 0 0;
+}
+
+.toast-action {
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.toast-action:hover {
+  background: #1d4ed8;
 }
 
 .toast-close {

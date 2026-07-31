@@ -15,6 +15,10 @@
         :activity="patient.activity"
       />
     </div>
+    <div v-else-if="loadError" class="panel-error">
+      <p>Unable to load patients. The server may be unavailable.</p>
+      <button class="retry-btn" @click="loadPatients">Retry</button>
+    </div>
     <div v-else class="patients-empty">
       <p>No patients registered yet</p>
     </div>
@@ -27,8 +31,12 @@ import api from '../services/api';
 import PatientMonitoringCard from './PatientMonitoringCard.vue';
 
 const patients = ref([]);
+const loadError = ref(false);
+const loading = ref(false);
 
-onMounted(async () => {
+async function loadPatients() {
+  loading.value = true;
+  loadError.value = false;
   try {
     const { data } = await api.get('/patients');
     patients.value = (data || []).map((p) => ({
@@ -41,9 +49,13 @@ onMounted(async () => {
       activity: p.lastActivity || 0,
     }));
   } catch {
-    patients.value = [];
+    loadError.value = true;
+  } finally {
+    loading.value = false;
   }
-});
+}
+
+onMounted(loadPatients);
 </script>
 
 <style scoped>
@@ -77,5 +89,33 @@ onMounted(async () => {
   text-align: center;
   color: #9ca3af;
   font-size: 14px;
+}
+
+.panel-error {
+  padding: 32px 20px;
+  text-align: center;
+  color: #dc2626;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.retry-btn {
+  padding: 6px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.retry-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 </style>

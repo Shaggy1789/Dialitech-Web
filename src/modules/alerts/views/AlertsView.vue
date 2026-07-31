@@ -4,7 +4,12 @@
 
     <AlertsToolbar />
 
-    <AlertsList :alerts="alertStore.alerts" />
+    <div v-if="alertStore.error && !alertStore.alerts.length" class="error-banner">
+      <span>Unable to load alerts. The server may be unavailable.</span>
+      <button @click="alertStore.fetchAll">Retry</button>
+    </div>
+
+    <AlertsList v-if="alertStore.alerts.length" :alerts="alertStore.alerts" />
   </div>
 </template>
 
@@ -31,5 +36,34 @@ onMounted(() => {
   padding: 32px;
   background: #f8f9fa;
   flex: 1;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-top: 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.error-banner button {
+  padding: 6px 14px;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.error-banner button:hover {
+  background: #fecaca;
 }
 </style>

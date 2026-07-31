@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { alertService } from '../services/alertService';
-import { alerts as mockAlerts } from '../modules/alerts/data/alerts';
 
 export const useAlertStore = defineStore('alerts', () => {
-  const alerts = ref([...mockAlerts]);
+  const alerts = ref([]);
   const loading = ref(false);
   const error = ref('');
 
@@ -16,7 +15,6 @@ export const useAlertStore = defineStore('alerts', () => {
       alerts.value = (data || []).map(mapApiAlertToFrontend);
     } catch (err) {
       error.value = err.response?.data?.message || err.response?.data?.title || 'Failed to load alerts';
-      alerts.value = [...mockAlerts];
     } finally {
       loading.value = false;
     }
