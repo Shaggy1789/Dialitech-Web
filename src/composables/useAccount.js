@@ -15,7 +15,7 @@ export function useAccount() {
         id: data.id,
         name: data.name,
         email: data.email,
-        role: 'Administrator',
+        role: 'Caregiver',
         status: 'Active',
         createdAt: null,
         lastAccess: null,

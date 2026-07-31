@@ -24,7 +24,13 @@
 <script setup>
 import { ref } from 'vue';
 
-const previewUrl = ref(null);
+const props = defineProps({
+  imageUrl: { type: String, default: '' },
+});
+
+const emit = defineEmits(['update:imageUrl']);
+
+const previewUrl = ref(props.imageUrl);
 const fileInput = ref(null);
 
 function triggerUpload() {
@@ -37,6 +43,7 @@ function onFileSelected(e) {
   const reader = new FileReader();
   reader.onload = (ev) => {
     previewUrl.value = ev.target.result;
+    emit('update:imageUrl', ev.target.result);
   };
   reader.readAsDataURL(file);
 }

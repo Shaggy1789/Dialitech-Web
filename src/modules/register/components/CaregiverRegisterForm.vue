@@ -2,7 +2,7 @@
   <div class="register-form">
     <h2 class="form-title">Register as Caregiver</h2>
 
-    <RegisterAvatarUploader />
+    <RegisterAvatarUploader v-model:image-url="imageUrl" />
 
     <div class="fields-grid">
       <div class="field">
@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import { useAuthStore } from '../../../stores/authStore';
 import RegisterAvatarUploader from './RegisterAvatarUploader.vue';
 
@@ -54,6 +54,8 @@ const form = reactive({
   confirmPassword: '',
 });
 
+const imageUrl = ref('');
+
 function getPayload() {
   return {
     name: form.name,
@@ -61,8 +63,8 @@ function getPayload() {
     email: form.email,
     phone: form.phone,
     password: form.password,
-    imageUrl: '',
-    plan: 'free',
+    imageUrl: imageUrl.value,
+    plan: 'Standard',
   };
 }
 

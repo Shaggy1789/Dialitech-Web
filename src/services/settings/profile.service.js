@@ -6,6 +6,6 @@ export const profileService = {
   },
 
   update(data) {
-    return api.put('/auth/me', data);
+    return api.put('/auth/profile', data);
   },
 };

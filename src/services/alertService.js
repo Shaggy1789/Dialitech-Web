@@ -1,7 +1,15 @@
 import api from './api';
 
 export const alertService = {
-  getByUser(userId) {
-    return api.get(`/alerts/${userId}`);
+  getAll() {
+    return api.get('/alerts');
+  },
+
+  getByPatient(patientId) {
+    return api.get(`/alerts/${patientId}`);
+  },
+
+  remove(alertId) {
+    return api.delete(`/alerts/${alertId}`);
   },
 };

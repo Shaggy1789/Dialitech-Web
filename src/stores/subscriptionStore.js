@@ -38,7 +38,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     });
   });
 
-  const PLAN_MAP = { Standard: 'free', Premium: 'professional', Enterprise: 'enterprise' };
+  const PLAN_MAP = { Standard: 'free', Pro: 'professional', Premium: 'enterprise' };
+  const PLAN_MAP_REVERSE = { free: 'Standard', basic: 'Standard', professional: 'Pro', enterprise: 'Premium' };
 
   function setPlan(id) {
     const mapped = PLAN_MAP[id] || id;
@@ -48,7 +49,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   function setRole(r) {
-    role.value = (r || 'admin').toLowerCase();
+    role.value = (r || 'caregiver').toLowerCase();
   }
 
   async function changePlan(newPlanId) {
@@ -58,8 +59,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       planId.value = newPlanId;
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       if (user) {
-        const reverseMap = { free: 'Standard', basic: 'Basic', professional: 'Professional', enterprise: 'Enterprise' };
-        user.plan = reverseMap[newPlanId] || newPlanId;
+        user.plan = PLAN_MAP_REVERSE[newPlanId] || newPlanId;
         localStorage.setItem('user', JSON.stringify(user));
       }
       return { success: true };
@@ -69,8 +69,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
         planId.value = newPlanId;
         const user = JSON.parse(localStorage.getItem('user') || 'null');
         if (user) {
-          const reverseMap = { free: 'Standard', basic: 'Basic', professional: 'Professional', enterprise: 'Enterprise' };
-          user.plan = reverseMap[newPlanId] || newPlanId;
+          user.plan = PLAN_MAP_REVERSE[newPlanId] || newPlanId;
           localStorage.setItem('user', JSON.stringify(user));
         }
         return { success: true, offline: true };

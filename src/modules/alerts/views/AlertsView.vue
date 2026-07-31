@@ -20,8 +20,8 @@ const alertStore = useAlertStore();
 const authStore = useAuthStore();
 
 onMounted(() => {
-  if (authStore.userId) {
-    alertStore.fetchByUser(authStore.userId);
+  if (authStore.isAuthenticated) {
+    alertStore.fetchAll();
   }
 });
 </script>

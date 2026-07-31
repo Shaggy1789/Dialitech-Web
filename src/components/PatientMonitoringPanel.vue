@@ -11,8 +11,8 @@
         :age="patient.age"
         :status="patient.status"
         :heart-rate="patient.heartRate"
-        :blood-pressure="patient.bloodPressure"
-        :temperature="patient.temperature"
+        :oxygen="patient.oxygen"
+        :activity="patient.activity"
       />
     </div>
     <div v-else class="patients-empty">
@@ -35,10 +35,10 @@ onMounted(async () => {
       id: p.id,
       name: p.name || '',
       age: p.age || 0,
-      status: p.status || 'Normal',
-      heartRate: p.heartRate || 0,
-      bloodPressure: p.bloodPressure || '',
-      temperature: p.temperature || 0,
+      status: p.lastHeartRate ? 'Active' : 'Normal',
+      heartRate: p.lastHeartRate || 0,
+      oxygen: p.lastOxygen || 0,
+      activity: p.lastActivity || 0,
     }));
   } catch {
     patients.value = [];

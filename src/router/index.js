@@ -78,6 +78,10 @@ router.beforeEach((to, from) => {
   }
 
   const sub = useSubscriptionStore();
+  const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+  if (storedUser?.plan) sub.setPlan(storedUser.plan);
+  if (storedUser?.role) sub.setRole(storedUser.role);
+
   const routeModule = to.meta.module;
   if (to.meta.requiresAuth && routeModule && !sub.can(routeModule)) {
     return { name: 'dashboard' };

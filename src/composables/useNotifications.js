@@ -14,14 +14,14 @@ export function useNotifications() {
   async function fetchAll() {
     loading.value = true;
     try {
-      const { data } = await alertService.getByUser(authStore.userId);
+      const { data } = await alertService.getAll();
       notifications.value = (data || []).map((a) => ({
         id: a.id,
         icon: a.severity >= 3 ? 'critical' : a.severity >= 2 ? 'warning' : 'info',
         title: a.type || 'Alert',
         description: a.message || '',
-        time: a.timestamp ? formatTime(a.timestamp) : '',
-        date: a.timestamp ? a.timestamp.split('T')[0] : '',
+        time: a.createdAt ? formatTime(a.createdAt) : '',
+        date: a.createdAt ? a.createdAt.split('T')[0] : '',
         read: a.isRead || false,
       }));
     } catch {

@@ -52,7 +52,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '../stores/authStore';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { useAlertStore } from '../stores/alertStore';
-import api from '../services/api';
+import { dashboardService } from '../services/dashboardService';
 import StatsCard from '../components/StatsCard.vue';
 import CriticalAlertsPanel from '../components/CriticalAlertsPanel.vue';
 import PatientMonitoringPanel from '../components/PatientMonitoringPanel.vue';
@@ -65,10 +65,7 @@ const authStore = useAuthStore();
 const alertStore = useAlertStore();
 const showModal = ref(false);
 const patientCount = ref(0);
-
-const criticalAlertsCount = computed(() =>
-  alertStore.alerts.filter((a) => a.priority === 'Critical').length
-);
+const criticalAlertsCount = ref(0);
 
 const patientLimit = computed(() => {
   const plan = sub.currentPlan;
@@ -79,13 +76,14 @@ const patientLimit = computed(() => {
 
 onMounted(async () => {
   try {
-    const { data: patients } = await api.get('/patients');
-    patientCount.value = (patients || []).length;
+    const { data } = await dashboardService.getSummary();
+    patientCount.value = data?.totalPatients ?? 0;
+    criticalAlertsCount.value = data?.activeAlerts ?? 0;
   } catch {
     patientCount.value = 0;
   }
   if (authStore.userId) {
-    await alertStore.fetchByUser(authStore.userId);
+    await alertStore.fetchAll();
   }
 });
 

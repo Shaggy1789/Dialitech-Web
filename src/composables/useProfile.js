@@ -43,8 +43,13 @@ export function useProfile() {
         name: form.name,
         lastname: form.lastname,
         phone: form.phone,
+        imageUrl: form.imageUrl,
       });
       profile.value = data;
+      const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+      if (storedUser) {
+        localStorage.setItem('user', JSON.stringify({ ...storedUser, ...data }));
+      }
       if (window.__toast) window.__toast.success('Profile updated successfully.');
       return true;
     } catch (err) {

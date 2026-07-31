@@ -33,5 +33,25 @@ export const authService = {
     return api.get('/auth/me');
   },
 
+  updateProfile(data) {
+    return api.put('/auth/profile', data);
+  },
+
+  deleteAccount() {
+    return api.delete('/auth/account');
+  },
+
+  sendRecoveryCode(data) {
+    return api.post('/auth/forgot-password', data);
+  },
+
+  verifyCode(data) {
+    return api.post('/auth/verify-code', data);
+  },
+
+  resetPassword(data) {
+    return api.post('/auth/reset-password', data);
+  },
+
   extractError,
 };

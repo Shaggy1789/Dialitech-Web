@@ -2,7 +2,7 @@
   <section class="alerts-panel">
     <div class="panel-header">
       <h2 class="panel-title">Critical Alerts</h2>
-      <button class="view-all-btn">View All</button>
+      <router-link to="/alerts" class="view-all-btn">View All</router-link>
     </div>
     <div v-if="alerts.length" class="alerts-list">
       <CriticalAlertCard
@@ -32,8 +32,8 @@ const alertStore = useAlertStore();
 const alerts = computed(() => alertStore.alerts.slice(0, 5));
 
 onMounted(() => {
-  if (authStore.userId) {
-    alertStore.fetchByUser(authStore.userId);
+  if (authStore.isAuthenticated) {
+    alertStore.fetchAll();
   }
 });
 </script>
