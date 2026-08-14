@@ -5,16 +5,14 @@ import authEvents from './authEvents';
 function resolveBaseURL() {
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl && envUrl.trim() !== '') {
-    return envUrl.replace(/\/+$/, '');
+    // Producción con VITE_API_URL definido (p. ej. https://api-dialitech-core-v2.onrender.com):
+    // el cliente construye <VITE_API_URL>/api/v1/... sobre ese origen.
+    return `${envUrl.trim().replace(/\/+$/, '')}/api/v1`;
   }
-  if (import.meta.env.DEV) {
-    return '/api/v1';
-  }
-  throw new Error(
-    'Configuración de API faltante: VITE_API_URL no está definida. ' +
-    'En producción, configura VITE_API_URL=https://api-dialitech-core-v2.onrender.com en las variables de entorno de Netlify. ' +
-    'En desarrollo, usa `netlify dev` o define VITE_API_URL en .env.local'
-  );
+  // Mismo origen /api/v1 (funciona siempre y evita CORS):
+  //  - Desarrollo: proxy de Vite en vite.config.js reenvía /api -> backend.
+  //  - Producción: netlify.toml redirige /api/v1/* -> backend.
+  return '/api/v1';
 }
 
 const baseURL = resolveBaseURL();
