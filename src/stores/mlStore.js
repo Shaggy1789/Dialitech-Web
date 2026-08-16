@@ -100,19 +100,128 @@ function toMlReading(reading) {
   return { heartRate, oxygen, activity, timestamp };
 }
 
+const ANOMALY_METRICS = ['heartRate', 'oxygen', 'activity'];
+
+// Calcula cuál métrica de una lectura se desvía MÁS del patrón de la ventana de
+// análisis, usando únicamente los datos reales enviados al modelo (media/desviación
+// estándar de la ventana). No inventa un diagnóstico: solo describe los datos.
+function computeMostDeviating(reading, window) {
+  if (!reading || typeof reading !== 'object' || !Array.isArray(window) || window.length < 3) {
+    return null;
+  }
+  let best = null;
+  for (const metric of ANOMALY_METRICS) {
+    const values = window
+      .map((r) => toFiniteNumber(r?.[metric]))
+      .filter((v) => v !== null);
+    if (values.length < 3) continue;
+    const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
+    const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+    const std = Math.sqrt(variance);
+    if (!Number.isFinite(std) || std < 1e-9) continue;
+    const value = toFiniteNumber(reading[metric]);
+    if (value === null) continue;
+    const z = (value - mean) / std;
+    if (!best || Math.abs(z) > Math.abs(best.z)) {
+      best = { metric, value, z, mean, std };
+    }
+  }
+  return best;
+}
+
+function normalizeArrayAnomaly(raw, window) {
+  if (typeof raw === 'string') {
+    return { source: 'string', text: raw, reason: raw };
+  }
+  if (!raw || typeof raw !== 'object') return null;
+
+  const readingIndexRaw = raw.index ?? raw.readingIndex ?? raw.reading_index;
+  const readingIndex = Number.isInteger(Number(readingIndexRaw)) ? Number(readingIndexRaw) : null;
+
+  return {
+    source: 'object',
+    metric: raw.metric ?? raw.feature ?? raw.parameter ?? null,
+    value: toFiniteNumber(raw.value ?? raw.observed ?? raw.current),
+    expected: toFiniteNumber(raw.expected ?? raw.baseline ?? raw.mean ?? raw.expected_value),
+    zScore: toFiniteNumber(raw.z_score ?? raw['z-score'] ?? raw.zScore ?? raw.anomaly_score),
+    severity: raw.severity ?? raw.anomaly_severity ?? null,
+    reason: raw.reason ?? raw.description ?? raw.message ?? raw.label ?? null,
+    threshold: toFiniteNumber(raw.threshold ?? raw.upper_bound ?? raw.lower_bound),
+    timestamp: toIsoTimestamp(raw.timestamp ?? raw.date ?? raw.recorded_at ?? raw.time),
+    readingIndex,
+    reading: readingIndex !== null && Array.isArray(window) ? window[readingIndex] ?? null : null,
+    deviation: readingIndex !== null && Array.isArray(window)
+      ? computeMostDeviating(window[readingIndex] ?? null, window)
+      : null,
+    anomalyScore: null,
+  };
+}
+
+// Normaliza anomalies. Soporta dos formatos reales del ML Service:
+//   1) data.anomalies = array con objetos por anomalía (metric, value, z_score,
+//      timestamp, reason, severity, ...) -> se normaliza y enriquece.
+//   2) data.anomalyDetection = { anomalyDetected, anomalyScore,
+//      affectedReadingsIndexes } (formato ACTUAL del servicio) -> se cruzan los
+//      índices con la ventana de lecturas enviada para mostrar valor, fecha y la
+//      métrica más desviada. Nunca se inventan valores ni razones médicas.
+function normalizeAnomalies(data, window) {
+  const anomalyDetection = data.anomalyDetection ?? {};
+  const anomalies = [];
+
+  if (Array.isArray(data.anomalies)) {
+    for (const raw of data.anomalies) {
+      const normalized = normalizeArrayAnomaly(raw, window);
+      if (normalized) anomalies.push(normalized);
+    }
+    return anomalies;
+  }
+
+  if (anomalyDetection.anomalyDetected) {
+    const indexes = Array.isArray(anomalyDetection.affectedReadingsIndexes)
+      ? anomalyDetection.affectedReadingsIndexes
+      : [];
+    const anomalyScore = toFiniteNumber(anomalyDetection.anomalyScore);
+    const windowArray = Array.isArray(window) ? window : [];
+    for (const rawIndex of indexes) {
+      const index = Number(rawIndex);
+      if (!Number.isInteger(index)) continue;
+      const reading = windowArray[index] ?? null;
+      anomalies.push({
+        source: 'index',
+        metric: null,
+        value: null,
+        expected: null,
+        zScore: null,
+        severity: null,
+        reason: null,
+        threshold: null,
+        timestamp: reading?.timestamp ? toIsoTimestamp(reading.timestamp) : null,
+        readingIndex: index,
+        reading,
+        deviation: computeMostDeviating(reading, windowArray),
+        anomalyScore,
+      });
+    }
+  }
+
+  return anomalies;
+}
+
 /**
  * Normaliza la respuesta del microservicio de ML a la estructura que consumen
  * los componentes del dashboard. Soporta tanto el formato actual del backend
  * (camelCase: riskPrediction, trendAnalysis, patternDetection, anomalyDetection)
  * como versiones anteriores con snake_case.
+ *
+ * `window` es la ventana de lecturas (ordenadas cronológicamente) que se envió
+ * al modelo; se usa para enriquecer las anomalías indexadas con los datos reales.
  */
-function normalizeMlResponse(data) {
+function normalizeMlResponse(data, window = []) {
   if (!data || typeof data !== 'object') return null;
 
   const riskPred = data.riskPrediction ?? data.risk_prediction ?? {};
   const trendAnalysis = data.trendAnalysis ?? data.trends ?? {};
   const patternDetection = data.patternDetection ?? {};
-  const anomalyDetection = data.anomalyDetection ?? {};
 
   // Normaliza trends: extrae la dirección de los objetos del backend
   // { direction, slope, confidence } -> "STABLE" | "ASCENDING" | "DESCENDING"
@@ -128,17 +237,8 @@ function normalizeMlResponse(data) {
   // Normaliza patterns: extrae del array anidado patternDetection.patterns
   const patterns = patternDetection.patterns ?? data.patterns ?? [];
 
-  // Normaliza anomalies: convierte anomalyDetection (objeto) a array
-  const anomalies = [];
-  if (Array.isArray(data.anomalies)) {
-    anomalies.push(...data.anomalies);
-  } else if (anomalyDetection.anomalyDetected) {
-    const indexes = anomalyDetection.affectedReadingsIndexes || [];
-    anomalies.push({
-      description: `Anomalía detectada en lecturas: ${indexes.length ? indexes.join(', ') : 'índices desconocidos'}`,
-      zScore: anomalyDetection.anomalyScore,
-    });
-  }
+  // Normaliza y enriquece anomalies con la ventana de lecturas reales
+  const anomalies = normalizeAnomalies(data, window);
 
   const predictions = data.predictions ?? [];
 
@@ -260,7 +360,7 @@ export const useMlStore = defineStore('ml', () => {
       const { data } = await mlService.analyze(patientId, windowReadings);
 
       if (myId !== requestId) return;
-      analysis.value = normalizeMlResponse(data);
+      analysis.value = normalizeMlResponse(data, windowReadings);
       lastUpdated.value = new Date();
     } catch (err) {
       if (myId !== requestId) return;

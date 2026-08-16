@@ -98,9 +98,35 @@
       <div v-if="normalizedAnomalies.length" class="block">
         <h3 class="block-title">Anomalías</h3>
         <ul class="anomaly-list">
-          <li v-for="(a, i) in normalizedAnomalies" :key="i" class="anomaly-item">
-            <span>{{ a.text }}</span>
-            <span v-if="a.zScore !== null" class="z-badge">z-score {{ a.zScore }}</span>
+          <li v-for="(a, i) in normalizedAnomalies" :key="i" class="anomaly-card">
+            <div class="anomaly-head">
+              <strong class="anomaly-name">{{ a.title }}</strong>
+              <span v-if="a.severity" class="severity-badge" :class="a.severityClass">{{ a.severity }}</span>
+            </div>
+
+            <dl class="anomaly-meta">
+              <template v-if="a.valueText !== null && a.valueText !== undefined">
+                <div class="meta-row">
+                  <dt>Valor</dt>
+                  <dd>{{ a.valueText }}</dd>
+                </div>
+              </template>
+              <template v-if="a.dateText">
+                <div class="meta-row">
+                  <dt>Fecha</dt>
+                  <dd>{{ a.dateText }}</dd>
+                </div>
+              </template>
+            </dl>
+
+            <div class="anomaly-why">
+              <span class="why-label">¿Por qué?</span>
+              <p class="why-text">{{ a.explanation }}</p>
+            </div>
+
+            <div v-if="a.metaChips.length" class="anomaly-meta-chips">
+              <span v-for="(c, j) in a.metaChips" :key="j" class="chip" :class="c.class" :title="c.title">{{ c.text }}</span>
+            </div>
           </li>
         </ul>
       </div>
@@ -199,21 +225,128 @@ function patternText(p) {
 
 const normalizedPatterns = computed(() => mlStore.patterns.map(patternText).filter(Boolean));
 
-function anomalyText(a) {
-  if (typeof a === 'string') return a;
-  if (!a) return 'Anomalía detectada';
-  return a.feature ?? a.name ?? a.description ?? a.reason ?? a.message ?? 'Anomalía detectada';
+const METRIC_INFO = {
+  heartrate: { label: 'Frecuencia cardíaca', unit: 'bpm', article: 'anómala' },
+  heart_rate: { label: 'Frecuencia cardíaca', unit: 'bpm', article: 'anómala' },
+  hr: { label: 'Frecuencia cardíaca', unit: 'bpm', article: 'anómala' },
+  oxygen: { label: 'Oxígeno en sangre', unit: '%', article: 'anómalo' },
+  spo2: { label: 'Oxígeno en sangre', unit: '%', article: 'anómalo' },
+  spo_2: { label: 'Oxígeno en sangre', unit: '%', article: 'anómalo' },
+  o2: { label: 'Oxígeno en sangre', unit: '%', article: 'anómalo' },
+  activity: { label: 'Actividad', unit: '', article: 'anómala' },
+};
+
+function metricInfo(metric) {
+  if (metric === null || metric === undefined || metric === '') return null;
+  const key = String(metric).toLowerCase();
+  const known = METRIC_INFO[key];
+  if (known) return known;
+  return {
+    label: key.replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    unit: '',
+    article: 'anómalo',
+  };
 }
 
-function zScoreOf(a) {
-  if (typeof a !== 'object' || a === null) return null;
-  const z = a.z_score ?? a['z-score'] ?? a.zScore;
-  return Number.isFinite(Number(z)) ? Number(z).toFixed(2) : null;
+function formatAnomalyDate(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const normalizedAnomalies = computed(() =>
-  mlStore.anomalies.map((a) => ({ text: anomalyText(a), zScore: zScoreOf(a) })),
-);
+function formatValue(value, unit) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const text = Number.isInteger(n) ? String(n) : String(parseFloat(n.toFixed(2)));
+  return unit ? `${text} ${unit}` : text;
+}
+
+function severityInfo(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const s = String(value).toLowerCase();
+  if (['high', 'critical', 'alto', 'alta', 'critic', 'severe', 'critica', '3'].includes(s)) {
+    return { label: 'Alta', class: 'sev-high' };
+  }
+  if (['medium', 'moderate', 'medio', 'media', '2'].includes(s)) {
+    return { label: 'Media', class: 'sev-mid' };
+  }
+  if (['low', 'baja', 'bajo', 'minor', '1'].includes(s)) {
+    return { label: 'Baja', class: 'sev-low' };
+  }
+  return { label: String(value), class: 'sev-mid' };
+}
+
+// Explicación basada ÚNICAMENTE en los datos disponibles. Nunca afirma un
+// diagnóstico médico; usa lenguaje de desviación estadística ("fuera del patrón
+// habitual", "detectado como anomalía por el modelo", "desviación significativa").
+function buildExplanation(a, info, valueText) {
+  if (a.reason && typeof a.reason === 'string' && a.reason.trim()) {
+    return a.reason.trim();
+  }
+  const label = info?.label ?? 'la lectura';
+  if (a.deviation && info && valueText) {
+    const direction = a.deviation.z > 0 ? 'por encima' : 'por debajo';
+    const meanText = formatValue(a.deviation.mean, info.unit);
+    return `El valor de ${label} (${valueText}) se encuentra ${direction} del patrón habitual observado en las lecturas utilizadas para el análisis${
+      meanText ? ` (promedio ${meanText})` : ''
+    }. Fue detectado como anomalía por el modelo.`;
+  }
+  if (info && valueText) {
+    return `El valor de ${label} (${valueText}) presenta una desviación significativa respecto al patrón habitual detectado en las lecturas utilizadas para el análisis. Fue detectado como anomalía por el modelo.`;
+  }
+  return 'Esta lectura fue detectada como anomalía por el modelo: sus valores se encuentran fuera del patrón habitual de las lecturas utilizadas para el análisis.';
+}
+
+function anomalyCard(a) {
+  if (!a) return null;
+
+  if (a.source === 'string') {
+    return {
+      title: '⚠️ Lectura anómala detectada',
+      valueText: null,
+      dateText: null,
+      explanation: a.text || 'Esta lectura fue detectada como anomalía por el modelo.',
+      severity: null,
+      severityClass: '',
+      metaChips: [],
+    };
+  }
+
+  const metric = a.metric ?? a.deviation?.metric ?? null;
+  const info = metricInfo(metric);
+  const value = a.value ?? a.deviation?.value ?? a.reading?.[metric] ?? null;
+  const valueText = formatValue(value, info?.unit ?? '');
+  const dateText = formatAnomalyDate(a.timestamp ?? a.reading?.timestamp);
+  const title = info && metric
+    ? `⚠️ ${info.label} ${info.article}`
+    : '⚠️ Lectura anómala detectada';
+
+  const sev = severityInfo(a.severity);
+
+  const chips = [];
+  if (a.zScore !== null && a.zScore !== undefined) {
+    chips.push({ text: `Z-score: ${Number(a.zScore).toFixed(2)}`, class: 'chip-z', title: 'Z-score proporcionado por el modelo' });
+  } else if (a.deviation?.z != null) {
+    chips.push({ text: `Z-score calculado: ${Number(a.deviation.z).toFixed(2)}`, class: 'chip-z', title: 'Desviación estándar calculada respecto a la ventana de análisis' });
+  }
+  if (a.anomalyScore !== null && a.anomalyScore !== undefined) {
+    chips.push({ text: `Score del modelo: ${Number(a.anomalyScore).toFixed(2)}`, class: 'chip-score', title: 'Puntuación de anomalía devuelta por el modelo' });
+  }
+
+  return {
+    title,
+    valueText,
+    dateText,
+    explanation: buildExplanation(a, info, valueText),
+    severity: sev?.label ?? null,
+    severityClass: sev?.class ?? '',
+    metaChips: chips,
+  };
+}
+
+const normalizedAnomalies = computed(() => mlStore.anomalies.map(anomalyCard).filter(Boolean));
 
 function predictionText(p) {
   if (typeof p === 'string' || typeof p === 'number') return String(p);
@@ -663,10 +796,9 @@ const statusClass = computed(() => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.anomaly-item,
 .pred-item {
   display: flex;
   align-items: center;
@@ -680,19 +812,135 @@ const statusClass = computed(() => {
   min-width: 0;
 }
 
-.anomaly-item span:first-child {
+.anomaly-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-left: 3px solid #f59e0b;
+  border-radius: 10px;
+  min-width: 0;
+}
+
+.anomaly-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.anomaly-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
   overflow-wrap: anywhere;
 }
 
-.z-badge {
+.severity-badge {
   flex-shrink: 0;
   font-size: 11px;
   font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.severity-badge.sev-high {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.severity-badge.sev-mid {
   color: #b45309;
   background: #fffbeb;
   border: 1px solid #fde68a;
+}
+
+.severity-badge.sev-low {
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.anomaly-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.meta-row dt {
+  color: #6b7280;
+  min-width: 48px;
+  flex-shrink: 0;
+}
+
+.meta-row dd {
+  margin: 0;
+  color: #111827;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.anomaly-why {
+  background: #ffffff;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.why-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+.why-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #374151;
+  overflow-wrap: anywhere;
+}
+
+.anomaly-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
   border-radius: 999px;
   padding: 2px 10px;
+}
+
+.chip-z {
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.chip-score {
+  color: #6d28d9;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
 }
 
 :global(:root.theme-dark) .ai-panel {
@@ -741,15 +989,43 @@ const statusClass = computed(() => {
 }
 
 :global(:root.theme-dark) .trend-chip,
-:global(:root.theme-dark) .anomaly-item,
+:global(:root.theme-dark) .anomaly-card,
 :global(:root.theme-dark) .pred-item {
   background: #0f172a;
 }
 
+:global(:root.theme-dark) .anomaly-card {
+  border-color: #334155;
+  border-left-color: #d97706;
+}
+
 :global(:root.theme-dark) .trend-label,
-:global(:root.theme-dark) .anomaly-item,
+:global(:root.theme-dark) .anomaly-name,
 :global(:root.theme-dark) .pred-item {
   color: #e2e8f0;
+}
+
+:global(:root.theme-dark) .anomaly-why {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+:global(:root.theme-dark) .why-text {
+  color: #cbd5e1;
+}
+
+:global(:root.theme-dark) .meta-row dt {
+  color: #94a3b8;
+}
+
+:global(:root.theme-dark) .meta-row dd {
+  color: #f1f5f9;
+}
+
+:global(:root.theme-dark) .chip-score {
+  color: #c4b5fd;
+  background: #312e81;
+  border-color: #4c1d95;
 }
 
 :global(:root.theme-dark) .updated-at {
