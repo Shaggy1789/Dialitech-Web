@@ -7,6 +7,27 @@ if (!ML_API_KEY) {
 
 const ALLOWED_PATHS = ['/api/v1/analyze', '/health', '/api/v1/model-info'];
 
+// Prefijos bajo los cuales Netlify puede invocar esta función. Según cómo llegue
+// la petición, event.path puede venir con el prefijo original o el reescrito:
+//   - redirect /ml/*            -> event.path = /ml/health (prefijo original)
+//   - redirect /api/ml/*        -> event.path = /api/ml/health
+//   - llamada directa           -> event.path = /.netlify/functions/ml-proxy/health
+// Se recorta el primer prefijo conocido para extraer SOLO la ruta del ML Service.
+const PATH_PREFIXES = ['/.netlify/functions/ml-proxy', '/api/ml', '/ml'];
+
+function extractServicePath(eventPath) {
+  let path = eventPath || '';
+  for (const prefix of PATH_PREFIXES) {
+    if (path === prefix || path.startsWith(`${prefix}/`)) {
+      path = path.slice(prefix.length);
+      break;
+    }
+  }
+  if (path === '') return '/';
+  if (!path.startsWith('/')) path = `/${path}`;
+  return path;
+}
+
 function isAllowedPath(path) {
   return ALLOWED_PATHS.some(allowed => path.startsWith(allowed));
 }
@@ -40,8 +61,15 @@ async function proxyRequest(event, path) {
   const requestHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'X-API-Key': ML_API_KEY,
   };
+
+  // La API key se inyecta SOLO server-side. Si no está configurada en el entorno
+  // de Netlify (ML_API_KEY), no se envía el header para que /health siga siendo
+  // público; los endpoints protegidos (analyze/model-info) devolverán 401 del
+  // ML Service y el error quedará visible para diagnosticar la configuración.
+  if (ML_API_KEY) {
+    requestHeaders['X-API-Key'] = ML_API_KEY;
+  }
 
   if (headers['content-type']) {
     requestHeaders['Content-Type'] = headers['content-type'];
@@ -98,7 +126,7 @@ export async function handler(event, context) {
     };
   }
 
-  const path = event.path.replace('/.netlify/functions/ml-proxy', '');
+  const path = extractServicePath(event.path);
 
   return proxyRequest(event, path);
 }
