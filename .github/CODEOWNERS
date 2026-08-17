@@ -1,0 +1,27 @@
+# CODEOWNERS
+# Define quién debe aprobar/revisar los cambios en áreas críticas del repositorio.
+# Formato: <ruta> <propietario(s)>
+
+# Por defecto, el propietario del repositorio es responsable de todo.
+* @Shaggy1789
+
+# CI/CD y supply chain: los workflows no deben cambiar sin revisión.
+/.github/workflows/ @Shaggy1789
+/.github/dependabot.yml @Shaggy1789
+/.github/dependency-review-config.yml @Shaggy1789
+
+# Configuración de seguridad de la aplicación.
+/src/config/security.js @Shaggy1789
+/src/services/token.service.js @Shaggy1789
+/src/services/api.js @Shaggy1789
+/src/services/auth/ @Shaggy1789
+/src/stores/authStore.js @Shaggy1789
+/src/router/ @Shaggy1789
+
+# Proxy del servicio ML: maneja la API key server-side, cambios críticos.
+/netlify/functions/ @Shaggy1789
+/netlify.toml @Shaggy1789
+/src/services/ml/ @Shaggy1789
+
+# Variables de entorno de ejemplo (no debe contener secretos reales).
+/.env.example @Shaggy1789

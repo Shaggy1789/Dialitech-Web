@@ -19,6 +19,13 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     Cross-Origin-Opener-Policy = "same-origin"
     Cross-Origin-Resource-Policy = "cross-origin"
+    # Content-Security-Policy de producción (Vue 3 + ECharts + Netlify proxy).
+    # - script-src 'self': sin eval ni inline (Vite build estático).
+    # - style-src 'unsafe-inline': requerido por ECharts/zrender (tooltips, estilos de contenedores).
+    # - connect-src: solo mismo origen (/api/v1 y /ml son proxys server-side de Netlify)
+    #   + origen del backend por si VITE_API_URL se define en un build puntual.
+    # - La API key de ML NUNCA viaja al navegador (se inyecta server-side en ml-proxy).
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api-dialitech-core-v2.onrender.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 
 # Proxy API calls to the Render backend via the same origin,
 # so the browser never makes a cross-origin request and CORS is bypassed.

@@ -3,9 +3,17 @@ export const STORAGE_KEYS = Object.freeze({
   USER: 'user',
 });
 
+// Almacenamiento del JWT.
+// El backend actual autentica con `Authorization: Bearer <token>` (devuelto en el body
+// del login) y NO soporta cookies HttpOnly (withCredentials=false, sin Set-Cookie).
+// Por eso se usa sessionStorage como mejora temporal frente a localStorage:
+//   - El token ya no persiste al cerrar el navegador.
+//   - sessionStorage sobrevive al refresh dentro de la misma pestaña (sesión continua).
+// Tradeoff conocido: la sesión NO se comparte entre pestañas/ventanas nuevas.
+// Migrar a cookie HttpOnly requiere soporte del backend.
 export const AUTH_CONFIG = Object.freeze({
   TOKEN_CLOCK_SKEW_SECONDS: 30,
-  TOKEN_STORAGE: 'localStorage',
+  TOKEN_STORAGE: 'sessionStorage',
 });
 
 export const SESSION_CONFIG = Object.freeze({
