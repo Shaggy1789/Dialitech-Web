@@ -11,7 +11,7 @@ export function isPhone(value) {
   if (typeof value !== 'string') return false;
   if (!value.trim()) return true;
   if (value.length > FIELD_LIMITS.PHONE_MAX) return false;
-  return /^[+\d][\d\s().\-]{5,19}$/.test(value.trim());
+  return /^[+\d][\d\s().-]{5,19}$/.test(value.trim());
 }
 
 export function isStrongPassword(value) {

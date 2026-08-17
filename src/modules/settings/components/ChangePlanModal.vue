@@ -86,14 +86,6 @@ const saving = ref(false);
 const currentPlanName = computed(() => store.planName);
 const currentPlanPrice = computed(() => formatPrice(store.currentPlan));
 
-const currentFeatures = computed(() => store.currentPlan?.features || []);
-const newFeatures = computed(() => props.newPlan?.features || []);
-
-const allFeatureLabels = computed(() => {
-  const set = new Set([...currentFeatures.value, ...newFeatures.value]);
-  return Array.from(set);
-});
-
 const currentPlanConfig = computed(() => store.currentPlan);
 
 const planFeatures = computed(() => {

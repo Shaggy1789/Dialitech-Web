@@ -65,7 +65,7 @@ import { usePatientStore } from '../stores/patientStore';
 import LoadingButton from './LoadingButton.vue';
 import { sanitizeString, sanitizeText } from '../utils/validators';
 
-const props = defineProps({
+defineProps({
   visible: Boolean,
 });
 

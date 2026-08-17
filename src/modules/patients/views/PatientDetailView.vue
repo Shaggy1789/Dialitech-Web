@@ -211,7 +211,6 @@ import { useMlStore } from '../../../stores/mlStore';
 import { useSubscriptionStore } from '../../../stores/subscriptionStore';
 import { dashboardService } from '../../../services/dashboardService';
 import { alertService } from '../../../services/alertService';
-import { patientService } from '../../../services/patients/patient.service';
 import PatientDetailHeader from '../components/detail/PatientDetailHeader.vue';
 import PatientProfileCard from '../components/detail/PatientProfileCard.vue';
 import PatientInfoCard from '../components/detail/PatientInfoCard.vue';

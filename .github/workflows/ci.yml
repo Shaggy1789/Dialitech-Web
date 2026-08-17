@@ -28,21 +28,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run lint (if configured)
-        run: |
-          if npm run lint --if-present 2>/dev/null; then
-            echo "Lint passed"
-          else
-            echo "No lint script configured, skipping"
-          fi
+      - name: Run lint
+        run: npm run lint
 
-      - name: Run typecheck (if configured)
-        run: |
-          if npm run typecheck --if-present 2>/dev/null; then
-            echo "Typecheck passed"
-          else
-            echo "No typecheck script configured, skipping"
-          fi
+      - name: Run typecheck
+        run: npm run typecheck
 
   security-audit:
     name: Security Audit
@@ -102,7 +92,7 @@ jobs:
       - name: Verify no secrets in build output
         run: |
           echo "Checking build output for potential secrets..."
-          if grep -r "test-key\|api-key\|secret\|password" dist/ --include="*.js" --include="*.map" 2>/dev/null | grep -v "sourceMappingURL"; then
+          if grep -rE "-----BEGIN|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|ghu_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{16,}|xox[baprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|eyJ[A-Za-z0-9_-]{20,}\.eyJ|test-key" dist/ --include="*.js" --include="*.map"; then
             echo "::error::Potential secrets found in build output!"
             exit 1
           fi
@@ -148,12 +138,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: |
-          if npm run test --if-present 2>/dev/null; then
-            echo "Tests passed"
-          else
-            echo "No test script configured, skipping"
-          fi
+        run: npm run test
 
   dependency-review:
     name: Dependency Review

@@ -152,7 +152,7 @@ async function proxyRequest(event, path) {
   }
 }
 
-export async function handler(event, context) {
+export async function handler(event, _context) {
   if (event.httpMethod === 'OPTIONS') {
     const corsHeaders = buildCorsHeaders(event);
     if (Object.keys(corsHeaders).length === 0) {

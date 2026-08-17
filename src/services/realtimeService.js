@@ -6,13 +6,11 @@ const MIN_POLL_INTERVAL = 3000;
 const MAX_POLL_INTERVAL = 30000;
 const DEFAULT_POLL_INTERVAL = 5000;
 const BACKOFF_MULTIPLIER = 1.5;
-const MAX_CONSECUTIVE_EMPTY = 6;
 
 let eventSource = null;
 let pollTimer = null;
 let isPolling = false;
 let currentInterval = DEFAULT_POLL_INTERVAL;
-let consecutiveEmpty = 0;
 let lastETag = null;
 let lastModified = null;
 let subscribers = new Set();
@@ -65,7 +63,6 @@ async function fetchReadingsOnce(force = false) {
     lastPollTime.value = new Date();
 
     if (response.status === 304) {
-      consecutiveEmpty += 1;
       return { readings: [], isNew: false, notModified: true };
     }
 
@@ -85,13 +82,11 @@ async function fetchReadingsOnce(force = false) {
     const newReadings = raw.filter((r) => r.timestamp && !existing.has(r.timestamp));
 
     if (newReadings.length > 0) {
-      consecutiveEmpty = 0;
       currentInterval = Math.max(MIN_POLL_INTERVAL, currentInterval / BACKOFF_MULTIPLIER);
       s.readings.push(...newReadings);
       notifySubscribers('readings', { newReadings, allReadings: s.readings });
       return { readings: newReadings, isNew: true, allReadings: s.readings };
     } else {
-      consecutiveEmpty += 1;
       currentInterval = Math.min(MAX_POLL_INTERVAL, currentInterval * BACKOFF_MULTIPLIER);
       return { readings: [], isNew: false };
     }
@@ -100,7 +95,6 @@ async function fetchReadingsOnce(force = false) {
       lastETag = null;
       lastModified = null;
     }
-    consecutiveEmpty += 1;
     currentInterval = Math.min(MAX_POLL_INTERVAL, currentInterval * BACKOFF_MULTIPLIER);
     notifySubscribers('error', { error: err });
     return { readings: [], isNew: false, error: err };
@@ -138,7 +132,6 @@ async function pollLoop() {
 function startPolling() {
   if (isPolling) return;
   isPolling = true;
-  consecutiveEmpty = 0;
   currentInterval = DEFAULT_POLL_INTERVAL;
   setConnectionStatus('connecting');
   pollLoop();
@@ -202,7 +195,6 @@ export function useRealtimeReadings() {
       stopPolling();
     } else if (isActive.value && patientId) {
       currentInterval = MIN_POLL_INTERVAL;
-      consecutiveEmpty = 0;
       fetchReadingsOnce(true).then(() => {
         if (!trySSE()) startPolling();
       });

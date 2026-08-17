@@ -59,7 +59,7 @@
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LoadingButton from '../../../components/LoadingButton.vue';
-import { PASSWORD_POLICY, FIELD_LIMITS } from '../../../config/security';
+import { PASSWORD_POLICY } from '../../../config/security';
 import { isEmail, sanitizeEmail, isStrongPassword, matches, required } from '../../../utils/validators';
 
 defineProps({
@@ -67,7 +67,7 @@ defineProps({
   error: { type: String, default: '' },
 });
 
-const emit = defineEmits(['submit']);
+defineEmits(['submit']);
 
 const { t } = useI18n();
 

@@ -7,7 +7,7 @@
           <span class="appearance-desc">{{ t('settings.themeDesc') }}</span>
         </div>
         <select class="field-select" :value="theme" @change="setTheme($event.target.value)">
-          <option v-for="topt in themeOptions" :key="topt" :value="topt">{{ t(`settings.${topt}`) }}</option>
+          <option v-for="topt in themeOptions" :key="topt" :value="topt">{{ topt === 'system' ? t('settings.systemTheme') : t(`settings.${topt}`) }}</option>
         </select>
       </div>
       <div class="appearance-row">

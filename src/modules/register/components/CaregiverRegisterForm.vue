@@ -40,15 +40,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue';
+import { reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useAuthStore } from '../../../stores/authStore';
 import RegisterAvatarUploader from './RegisterAvatarUploader.vue';
 import { validateRegisterForm, sanitizeString, sanitizeEmail, sanitizePhone } from '../../../utils/validators';
 
 const { t } = useI18n();
-const authStore = useAuthStore();
-const fieldErrors = computed(() => authStore.fieldErrors || {});
 
 const form = reactive({
   name: '',

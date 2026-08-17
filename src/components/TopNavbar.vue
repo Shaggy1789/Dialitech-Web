@@ -174,7 +174,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const sub = useSubscriptionStore();
 const layout = useLayout();
-const { notifications, unreadCount, hasUnread, markAllAsRead, loading } = useNotifications();
+const { notifications, hasUnread, markAllAsRead, loading } = useNotifications();
 
 const showDropdown = ref(false);
 const userMenuOpen = ref(false);

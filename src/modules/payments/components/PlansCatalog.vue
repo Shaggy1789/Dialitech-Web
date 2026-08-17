@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PAYMENT_PLANS } from '../../../data/paymentPlans';
 import { PLANS } from '../../../data/plans';
